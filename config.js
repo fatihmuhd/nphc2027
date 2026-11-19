@@ -11,7 +11,7 @@ window.CONFIG = {
   websiteUrl: "",                                        // conference website, shown on the thank-you screen
   maxVotes: 10,                                          // subjects each voter can pick (across all topics)
   // Leave empty for prototype mode. After deploying the worker, paste its URL here (no trailing slash).
-  endpoint: "",
+  endpoint: "https://nphc2027-vote.alfatihpahrol.workers.dev",
   roles: ["Public Health Physician / Specialist","Clinical Specialist / Consultant","Medical Officer","Trainee (Master / DrPH / Specialist programme)","Academic / Researcher","Programme Manager / Policy Maker","Other health professional"],
   specialties: ["Public Health Medicine – Epidemiology","Public Health Medicine – Communicable Disease Control","Public Health Medicine – Non-Communicable Disease","Public Health Medicine – Health Services Management","Public Health Medicine – Environmental Health","Public Health Medicine – Occupational Health","Public Health Medicine – Family / Maternal & Child Health","Public Health Medicine – Health Promotion","Public Health Medicine – Nutrition","Family Medicine","Infectious Disease","Internal Medicine","Paediatrics","Obstetrics & Gynaecology","Psychiatry","Emergency Medicine","Geriatrics","Pathology / Microbiology","Health Informatics","Other"],
   years: ["Less than 5","5–10","11–20","More than 20"],
