@@ -8,7 +8,7 @@ window.CONFIG = {
   organiser: "NPHC 2027 Scientific Committee",
   tagline: "Help shape the scientific programme. Vote for the subjects you most want to see at NPHC 2027.",
   deadline: "31 January 2027",                           // ← confirm
-  websiteUrl: "",                                        // conference website, shown on the thank-you screen
+  websiteUrl: "https://www.pppkam.org.my",                                        // conference website, shown on the thank-you screen
   maxVotes: 10,                                          // subjects each voter can pick (across all topics)
   // Leave empty for prototype mode. After deploying the worker, paste its URL here (no trailing slash).
   endpoint: "https://nphc2027-vote.alfatihpahrol.workers.dev",
