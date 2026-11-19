@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Committee Dashboard – NPHC 2027</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f4f7f8; --surface:#fcfcfb; --ink:#14263a; --muted:#52514e; --faint:#8a8f96; --line:#dbe3e8;
+    --brand:#0f766e; --brand-soft:#e6f4f2; --err:#b91c1c;
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45}
+  header{background:var(--ink);color:#fff;padding:18px}
+  header .wrap{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  header h1{font-size:19px;margin:0;flex:1;min-width:200px}
+  header .eyebrow{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;opacity:.7;font-weight:600}
+  header button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)}
+  main{max-width:1100px;margin:0 auto;padding:16px 14px 40px}
+  button{font:inherit;font-weight:600;border-radius:10px;padding:10px 16px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+  /* login */
+  .login{max-width:380px;margin:40px auto}
+  .login h2{margin:0 0 4px;font-size:20px}
+  .login p{color:var(--muted);margin:0 0 16px;font-size:14px}
+  label{display:block;font-weight:600;font-size:14px;margin:12px 0 6px}
+  input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit}
+  input:focus{outline:2px solid var(--brand);border-color:var(--brand)}
+  .err{color:var(--err);font-size:13.5px;min-height:18px;margin-top:8px}
+  .login button{width:100%;margin-top:14px;padding:13px}
+  .note{font-size:13px;color:var(--muted);background:#fff8eb;border:1px solid #f3dfb5;border-radius:10px;padding:10px 12px;margin-bottom:14px}
+  /* dashboard */
+  .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;color:var(--muted);font-size:13.5px}
+  .toolbar .sp{flex:1}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}
+  .kpi .lbl{font-size:12.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  .kpi .val{font-size:32px;font-weight:700;line-height:1.1;margin-top:6px;font-variant-numeric:tabular-nums}
+  .kpi .ctx{font-size:13px;color:var(--muted);margin-top:4px}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .wide{grid-column:1/-1}
+  @media (max-width:760px){.grid{grid-template-columns:1fr}}
+  .card h3{font-size:15px;margin:0 0 2px}
+  .card .sub{font-size:13px;color:var(--muted);margin:0 0 12px}
+  .chartbox{position:relative}
+  .pie{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .pie .chartbox{width:180px;height:180px;flex:none}
+  .legend{flex:1;min-width:180px;list-style:none;margin:0;padding:0;font-size:13.5px}
+  .legend li{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef2f4}
+  .legend .sw{width:12px;height:12px;border-radius:3px;flex:none}
+  .legend .nm{flex:1}
+  .legend .n{font-variant-numeric:tabular-nums;font-weight:600}
+  .legend .p{color:var(--muted);width:44px;text-align:right;font-variant-numeric:tabular-nums}
+  .sugg{list-style:none;margin:0;padding:0;max-height:480px;overflow:auto}
+  .sugg li{padding:10px 0;border-bottom:1px solid #eef2f4;font-size:14px}
+  .sugg .st{font-weight:600}
+  .sugg .nt{color:var(--ink);opacity:.85;margin-top:3px;font-size:13.5px}
+  .sugg .cat{font-size:12px;color:var(--muted);margin-top:3px}
+  .sgcounts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .sgcounts button{padding:5px 10px;font-size:12.5px;font-weight:500;border-radius:20px}
+  .sgcounts button.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+  .sgcounts b{font-variant-numeric:tabular-nums;margin-left:4px}
+  details{margin-top:10px;font-size:13px;color:var(--muted)}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin-top:6px}
+  td,th{padding:5px 6px;border-bottom:1px solid #eef2f4;text-align:left}
+  td.n{text-align:right;font-variant-numeric:tabular-nums}
+  .rank{list-style:none;margin:0;padding:0}
+  .rank li{padding:7px 0}
+  .rank .top{display:flex;gap:8px;align-items:baseline;font-size:14px}
+  .rank .ti{flex:1;color:var(--ink)}
+  .rank .v{font-weight:600;font-variant-numeric:tabular-nums}
+  .rank .pc{color:var(--muted);font-size:12.5px;width:40px;text-align:right;font-variant-numeric:tabular-nums}
+  .rank .track{height:12px;margin-top:4px}
+  .rank .fill{height:100%;border-radius:0 4px 4px 0;min-width:2px}
+  .rlg{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin-bottom:8px;color:var(--muted)}
+  .rlg span{display:inline-flex;align-items:center;gap:6px}
+  .rlg i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .filters select{padding:9px 10px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:#fff;max-width:100%}
+  .rank .meta{font-size:12px;color:var(--muted);margin-top:1px}
+  .tag{display:inline-block;font-size:11px;border-radius:10px;padding:0 7px;margin-left:4px;border:1px solid var(--line)}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1><span class="eyebrow">Scientific Committee</span><span id="confName"></span></h1>
+  <button id="logout" class="hidden">Log out</button>
+</div></header>
+
+<main>
+  <!-- LOGIN -->
+  <section id="loginView" class="login">
+    <div class="note hidden" id="demoNote">Prototype mode — sign in with <b>demo</b> / <b>demo2027</b> to see sample data.</div>
+    <div class="card">
+      <h2>Committee login</h2>
+      <p>For registered scientific committee members only. Results are shown as totals — no individual voter details.</p>
+      <form id="loginForm" novalidate>
+        <label for="user">Username</label>
+        <input id="user" autocomplete="username" autocapitalize="none">
+        <label for="pass">Password</label>
+        <input id="pass" type="password" autocomplete="current-password">
+        <div class="err" id="loginErr"></div>
+        <button class="primary" type="submit" id="loginBtn">Sign in</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="dash" class="hidden">
+    <div class="note hidden" id="sampleNote">Showing sample data (prototype). Real results appear once the GitHub connection is set up.</div>
+    <div class="toolbar">
+      <span id="updated"></span><span class="sp"></span>
+      <button id="refresh">Refresh</button>
+    </div>
+
+    <div class="kpis">
+      <div class="card kpi"><div class="lbl">Voters</div><div class="val" id="k_voters">–</div><div class="ctx" id="k_today"></div></div>
+      <div class="card kpi"><div class="lbl">Subject votes cast</div><div class="val" id="k_votes">–</div><div class="ctx" id="k_avg"></div></div>
+      <div class="card kpi" style="cursor:pointer" onclick="document.getElementById('suggCard').scrollIntoView({behavior:'smooth'})"><div class="lbl">Voter suggestions</div><div class="val" id="k_props">–</div><div class="ctx">subjects not on the list · view ›</div></div>
+      <div class="card kpi"><div class="lbl">Leading topic</div><div class="val" id="k_topN" style="font-size:24px">–</div><div class="ctx" id="k_top"></div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card wide">
+        <h3>Votes by topic</h3>
+        <p class="sub">Total subject votes in each of the 16 topics</p>
+        <ul class="rank" id="topicList"></ul>
+      </div>
+
+      <div class="card wide">
+        <h3>Subject ranking</h3>
+        <p class="sub">Voters who picked each subject · <span id="subjCount"></span></p>
+        <div class="filters">
+          <select id="topicFilter"></select>
+          <select id="statusFilter"><option value="">New & returning</option><option value="New">New proposals only</option><option value="Returning">Returning only</option></select>
+        </div>
+        <ul class="rank" id="rankList"></ul>
+        <button id="showAll" style="margin-top:8px">Show all</button>
+        <details><summary>Show as table</summary><div style="max-height:360px;overflow:auto"><table id="rankTable"></table></div></details>
+      </div>
+
+      <div class="card wide" id="suggCard">
+        <h3>Voter suggestions (not on the list)</h3>
+        <p class="sub">Subjects proposed by voters, with their reasons · names are not shown</p>
+        <div class="sgcounts" id="suggCounts"></div>
+        <div class="filters">
+          <select id="suggTopic"></select>
+          <input id="suggSearch" type="text" placeholder="Search suggestions" style="flex:1;min-width:160px;padding:9px 10px;font-size:14px">
+          <button id="suggCopy" type="button">Copy list</button>
+        </div>
+        <div class="sub" id="suggInfo" style="margin:4px 0 6px"></div>
+        <ul class="sugg" id="sugg"></ul>
+      </div>
+
+      <div class="card">
+        <h3>New vs returning subjects</h3>
+        <p class="sub">Share of all subject votes</p>
+        <div class="pie"><div class="chartbox"><canvas id="catChart"></canvas></div><ul class="legend" id="catLegend"></ul></div>
+      </div>
+
+      <div class="card">
+        <h3>Voters by professional role</h3>
+        <p class="sub">Share of voters</p>
+        <div class="pie"><div class="chartbox"><canvas id="roleChart"></canvas></div><ul class="legend" id="roleLegend"></ul></div>
+      </div>
+
+      <div class="card">
+        <h3>Voters by specialty</h3>
+        <p class="sub">Top 10; the rest grouped as “All others” · PHM = Public Health Medicine</p>
+        <div class="chartbox" id="specBox"><canvas id="specChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h3>Years in practice</h3>
+        <p class="sub">Voters who answered</p>
+        <div class="chartbox" style="height:240px"><canvas id="yearsChart"></canvas></div>
+      </div>
+
+      <div class="card wide">
+        <h3>Voting activity</h3>
+        <p class="sub">New voters per day</p>
+        <div class="chartbox" style="height:220px"><canvas id="dayChart"></canvas></div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<script src="config.js"></script>
+<script>
+const CONFIG = window.CONFIG;
+const $ = id => document.getElementById(id);
+const DEMO = !CONFIG.endpoint;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const SERIES = ["--s1","--s2","--s3","--s4","--s5","--s6","--s7","--s8"].map(css);
+const SURFACE = css("--surface"), MUTED = css("--muted"), GRID = "#e8edf0";
+const allTopics = CONFIG.categories.flatMap(c => c.topics.map(t => ({...t, cat:c.name})));
+let token = null; try { token = sessionStorage.getItem("cv-token"); } catch(e){}
+const charts = {};
+
+$("confName").textContent = CONFIG.conferenceName + " · Voting dashboard";
+if (DEMO) $("demoNote").classList.remove("hidden");
+
+Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+Chart.defaults.color = MUTED;
+Chart.defaults.plugins.legend.display = false;
+Chart.defaults.plugins.tooltip.backgroundColor = "#14263a";
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.animation.duration = 400;
+
+/* ---------- Login ---------- */
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const u = $("user").value.trim(), p = $("pass").value;
+  $("loginErr").textContent = "";
+  if (!u || !p) { $("loginErr").textContent = "Enter your username and password."; return; }
+  $("loginBtn").disabled = true; $("loginBtn").textContent = "Signing in…";
+  try {
+    if (DEMO) {
+      if (u !== "demo" || p !== "demo2027") throw new Error("bad");
+      token = "demo";
+    } else {
+      const r = await fetch(CONFIG.endpoint + "/login", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username:u,password:p}) });
+      if (!r.ok) throw new Error("bad");
+      token = (await r.json()).token;
+    }
+    try { sessionStorage.setItem("cv-token", token); } catch(e){}
+    $("pass").value = "";
+    await openDash();
+  } catch(err) {
+    $("loginErr").textContent = "Username or password is incorrect.";
+  } finally { $("loginBtn").disabled = false; $("loginBtn").textContent = "Sign in"; }
+});
+$("logout").addEventListener("click", () => {
+  token = null; try { sessionStorage.removeItem("cv-token"); } catch(e){}
+  $("dash").classList.add("hidden"); $("logout").classList.add("hidden"); $("loginView").classList.remove("hidden");
+});
+$("refresh").addEventListener("click", () => load());
+
+async function openDash(){
+  $("loginView").classList.add("hidden"); $("dash").classList.remove("hidden"); $("logout").classList.remove("hidden");
+  $("sampleNote").classList.toggle("hidden", !DEMO);
+  await load();
+}
+
+/* ---------- Data ---------- */
+async function load(){
+  let s;
+  if (DEMO) s = sampleStats();
+  else {
+    const r = await fetch(CONFIG.endpoint + "/stats", { headers:{ Authorization:"Bearer " + token } });
+    if (r.status === 401) { $("logout").click(); $("loginErr").textContent = "Session expired. Please sign in again."; return; }
+    if (!r.ok) { $("updated").textContent = "Couldn't load results. Try Refresh."; return; }
+    s = await r.json();
+  }
+  render(s);
+}
+
+// Prototype data: deterministic sample + any test votes made in this browser
+function sampleStats(){
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const weights = {}; allTopics.forEach(t => weights[t.id] = Math.pow(rnd(),3)*0.09 + 0.004);
+  const specW = CONFIG.specialties.map((_,i)=> 1/(1+i*0.25));
+  const pick = (arr,w) => { const t=w.reduce((a,b)=>a+b,0); let r=rnd()*t; for(let i=0;i<arr.length;i++){ if((r-=w[i])<0) return arr[i]; } return arr[0]; };
+  const s = { updatedAt:new Date().toISOString(), totalVoters:0, totalVotes:0, topics:{}, specialty:{}, role:{}, years:{}, daily:{}, proposals:[] };
+  const N = 186;
+  for (let i=0;i<N;i++){
+    const day = new Date(Date.now() - Math.floor(Math.pow(rnd(),0.7)*14)*864e5).toISOString().slice(0,10);
+    s.daily[day]=(s.daily[day]||0)+1;
+    const sp = pick(CONFIG.specialties, specW);
+    s.specialty[sp]=(s.specialty[sp]||0)+1;
+    const ro = pick(CONFIG.roles,[5,3,3,2,1.2,.6,.4]); s.role[ro]=(s.role[ro]||0)+1;
+    if (rnd()>.15){ const y = pick(CONFIG.years,[2,3,3,2]); s.years[y]=(s.years[y]||0)+1; }
+    let n=0; allTopics.forEach(t => { if (n<CONFIG.maxVotes && rnd() < (weights[t.id]??.3)) { s.topics[t.id]=(s.topics[t.id]||0)+1; n++; } });
+    s.totalVotes += n;
+  }
+  s.totalVoters = N; s.anonymousVoters = 41;
+  const ago = d => new Date(Date.now()-d*864e5).toISOString().slice(0,10);
+  s.proposals = [
+    {category:"Infectious disease surveillance and health security", title:"Tuberculosis screening among migrant workers", note:"High TB burden in construction and plantation sectors; current screening misses undocumented workers.", date:ago(1)},
+    {category:"Nutrition, physical activity and chronic disease prevention", title:"GLP-1 medicines and population obesity strategy", note:"Rising demand and cost; what is the public health position?", date:ago(2)},
+    {category:"Public health workforce and education", title:"Leadership development for new public health specialists", note:"", date:ago(4)},
+    {category:"Other", title:"Road traffic injury prevention among motorcyclists", note:"Leading cause of death in young Malaysians, not covered in any topic.", date:ago(5)},
+    {category:"Mental health, gender and digital life", title:"Online gambling harms among young adults", note:"Suggest a speaker from the national addiction programme.", date:ago(7)},
+    {category:"Other", title:"Drowning prevention during monsoon floods", note:"Children and flood evacuees at risk every year.", date:ago(9)},
+    {category:"Infectious disease surveillance and health security", title:"Leptospirosis after floods: surveillance and early treatment", note:"", date:ago(10)}
+  ];
+  // fold in test votes submitted on the voting page in this browser
+  try {
+    Object.values(JSON.parse(localStorage.getItem("confvote-demo")||"{}")).forEach(v => {
+      s.totalVoters++; s.totalVotes += v.votes.length; if (v.voter.anonymous) s.anonymousVoters++;
+      v.votes.forEach(id => s.topics[id]=(s.topics[id]||0)+1);
+      s.specialty[v.voter.specialty]=(s.specialty[v.voter.specialty]||0)+1;
+      if (v.voter.role) s.role[v.voter.role]=(s.role[v.voter.role]||0)+1;
+      if (v.voter.years) s.years[v.voter.years]=(s.years[v.voter.years]||0)+1;
+      const d=v.submittedAt.slice(0,10); s.daily[d]=(s.daily[d]||0)+1;
+      v.proposals.forEach(p => s.proposals.push({category:p.category,title:p.title,note:p.note,date:v.submittedAt.slice(0,10)}));
+    });
+  } catch(e){}
+  return s;
+}
+
+/* ---------- Render ---------- */
+const fmt = n => n.toLocaleString();
+const pct = (n,t) => t ? Math.round(n/t*100) + "%" : "0%";
+
+function render(s){
+  const updated = new Date(s.updatedAt);
+  $("updated").textContent = "Last updated " + updated.toLocaleString([], {dateStyle:"medium", timeStyle:"short"});
+
+  // KPIs
+  const today = new Date().toISOString().slice(0,10);
+  $("k_voters").textContent = fmt(s.totalVoters);
+  $("k_today").textContent = "+" + fmt(s.daily[today]||0) + " today · " + fmt(s.anonymousVoters||0) + " anonymous";
+  $("k_votes").textContent = fmt(s.totalVotes);
+  $("k_avg").textContent = (s.totalVoters ? (s.totalVotes/s.totalVoters).toFixed(1) : "0") + " picks per voter (max " + CONFIG.maxVotes + ")";
+  $("k_props").textContent = fmt(s.proposals.length);
+  const ranked = allTopics.map(t => ({...t, n:s.topics[t.id]||0})).sort((a,b)=>b.n-a.n);
+  const topicTotals = CONFIG.categories.map(c => ({name:c.name, no:c.no, n:c.topics.reduce((a,t)=>a+(s.topics[t.id]||0),0)})).sort((a,b)=>b.n-a.n);
+  const lead = topicTotals[0];
+  $("k_topN").textContent = lead && lead.n ? pct(lead.n, s.totalVotes) : "–";
+  $("k_top").textContent = lead && lead.n ? lead.name + " (share of all votes)" : "No votes yet";
+
+  // Votes by topic — 16 rows, single color (one measure)
+  const maxT = Math.max(1, ...topicTotals.map(t=>t.n));
+  $("topicList").innerHTML = topicTotals.map((t,i)=>`<li>
+      <div class="top"><span class="ti">${i+1}. ${esc(t.name)}</span><span class="v">${fmt(t.n)}</span><span class="pc">${pct(t.n,s.totalVotes)}</span></div>
+      <div class="track"><div class="fill" style="width:${t.n/maxT*100}%;background:${SERIES[0]}"></div></div></li>`).join("");
+
+  // Subject ranking with filters
+  state.ranked = ranked; state.s = s;
+  renderSubjects();
+
+  // New vs returning (doughnut, 2 slots)
+  const nv = ranked.filter(t=>t.status==="New").reduce((a,t)=>a+t.n,0), rv = ranked.filter(t=>t.status==="Returning").reduce((a,t)=>a+t.n,0);
+  donut("catChart", "catLegend", ["New proposals","Returning subjects"], [nv, rv], [SERIES[0], SERIES[1]]);
+
+  // Voters by role (doughnut) — fixed order from config, never re-sorted by count
+  const roles = CONFIG.roles.filter(r => s.role[r]);
+  const extraRoles = Object.keys(s.role).filter(r => !CONFIG.roles.includes(r));
+  const roleLabels = [...roles, ...(extraRoles.length?["Other"]:[])];
+  const roleVals = [...roles.map(r=>s.role[r]), ...(extraRoles.length?[extraRoles.reduce((a,r)=>a+s.role[r],0)]:[])];
+  donut("roleChart", "roleLegend", roleLabels, roleVals, roleLabels.map(l => SERIES[Math.max(0, CONFIG.roles.indexOf(l)) % 8] ));
+
+  // Specialty — top 10 + all others, single color (magnitude, one series)
+  const spec = Object.entries(s.specialty).sort((a,b)=>b[1]-a[1]);
+  const top10 = spec.slice(0,10), rest = spec.slice(10).reduce((a,[,n])=>a+n,0);
+  if (rest) top10.push(["All others ("+(spec.length-10)+")", rest]);
+  $("specBox").style.height = Math.max(200, top10.length * 28 + 30) + "px";
+  bar("specChart", top10.map(x=>x[0].replace("Public Health Medicine – ","PHM – ")), top10.map(x=>x[1]), css("--s1"), true, (i)=>pct(top10[i][1], s.totalVoters) + " of voters");
+
+  // Years in practice — ordered buckets
+  const yl = CONFIG.years, yv = yl.map(y => s.years[y]||0), ytot = yv.reduce((a,b)=>a+b,0);
+  bar("yearsChart", yl, yv, css("--s1"), false, (i)=>pct(yv[i], ytot) + " of those who answered");
+
+  // Daily activity — last 30 days
+  const days = []; for (let i=29;i>=0;i--) days.push(new Date(Date.now()-i*864e5).toISOString().slice(0,10));
+  const firstIdx = days.findIndex(d => s.daily[d]); const shown = days.slice(Math.max(0, Math.min(firstIdx<0?16:firstIdx, 16)));
+  bar("dayChart", shown.map(d => new Date(d+"T00:00").toLocaleDateString([], {day:"numeric", month:"short"})), shown.map(d=>s.daily[d]||0), css("--s1"), false, ()=> "new voters");
+
+  // Suggestions
+  renderSuggestions();
+}
+
+const state = { showAll:false };
+$("topicFilter").innerHTML = `<option value="">All 16 topics</option>` + CONFIG.categories.map(c=>`<option>${esc(c.name)}</option>`).join("");
+["topicFilter","statusFilter"].forEach(id => $(id).addEventListener("change", () => { state.showAll=false; renderSubjects(); }));
+$("showAll").addEventListener("click", () => { state.showAll = !state.showAll; renderSubjects(); });
+function renderSubjects(){
+  const s = state.s; if (!s) return;
+  const tf = $("topicFilter").value, sf = $("statusFilter").value;
+  const list = state.ranked.filter(t => (!tf || t.cat===tf) && (!sf || t.status===sf));
+  const shown = state.showAll ? list : list.slice(0,20);
+  const maxN = Math.max(1, ...list.map(t=>t.n));
+  $("subjCount").textContent = state.showAll || list.length<=20 ? `${list.length} subjects` : `top 20 of ${list.length}`;
+  $("rankList").innerHTML = shown.map((t,i)=>`<li title="${t.n} voters">
+      <div class="top"><span class="ti">${i+1}. ${esc(t.title)}</span><span class="v">${fmt(t.n)}</span><span class="pc">${pct(t.n,s.totalVoters)}</span></div>
+      <div class="meta">${esc(t.cat)}<span class="tag">${t.status==="New"?"New":"Returning"}</span></div>
+      <div class="track"><div class="fill" style="width:${t.n/maxN*100}%;background:${SERIES[0]}"></div></div></li>`).join("") || `<li class="cat">No subjects.</li>`;
+  $("showAll").classList.toggle("hidden", list.length<=20);
+  $("showAll").textContent = state.showAll ? "Show top 20" : `Show all ${list.length}`;
+  $("rankTable").innerHTML = "<tr><th>#</th><th>Subject</th><th>Topic</th><th>Status</th><th>Voters</th><th>% voters</th></tr>" +
+    list.map((t,i)=>`<tr><td>${i+1}</td><td>${esc(t.title)}</td><td>${esc(t.cat)}</td><td>${t.status}</td><td class="n">${t.n}</td><td class="n">${pct(t.n,s.totalVoters)}</td></tr>`).join("");
+}
+
+// ---------- Voter suggestions ----------
+$("suggTopic").innerHTML = `<option value="">All topics</option>` + [...CONFIG.categories.map(c=>c.name), "Other"].map(n=>`<option>${esc(n)}</option>`).join("");
+$("suggTopic").addEventListener("change", renderSuggestions);
+$("suggSearch").addEventListener("input", renderSuggestions);
+function suggFiltered(){
+  const p = (state.s?.proposals || []).slice().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
+  const tf = $("suggTopic").value, q = $("suggSearch").value.trim().toLowerCase();
+  return p.filter(x => (!tf || x.category===tf) && (!q || (x.title+" "+(x.note||"")).toLowerCase().includes(q)));
+}
+function renderSuggestions(){
+  const all = state.s?.proposals || [];
+  // counts per topic (chips double as quick filters)
+  const counts = {}; all.forEach(p => counts[p.category] = (counts[p.category]||0)+1);
+  const tf = $("suggTopic").value;
+  $("suggCounts").innerHTML = Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([c,n]) =>
+    `<button type="button" data-c="${esc(c)}" class="${tf===c?"on":""}">${esc(c)}<b>${n}</b></button>`).join("");
+  $("suggCounts").querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    $("suggTopic").value = ($("suggTopic").value === b.dataset.c) ? "" : b.dataset.c; renderSuggestions();
+  }));
+  const list = suggFiltered();
+  $("suggInfo").textContent = all.length ? `Showing ${list.length} of ${all.length} suggestions, newest first` : "";
+  $("sugg").innerHTML = list.length ? list.map(p => `<li>
+      <div class="st">${esc(p.title)}</div>
+      ${p.note ? `<div class="nt">${esc(p.note)}</div>` : ""}
+      <div class="cat">${esc(p.category)}${p.date ? " · " + new Date(p.date+"T00:00").toLocaleDateString([], {day:"numeric", month:"short", year:"numeric"}) : ""}</div>
+    </li>`).join("") : `<li class="cat">${all.length ? "No suggestions match." : "No suggestions yet."}</li>`;
+}
+$("suggCopy").addEventListener("click", async () => {
+  const text = suggFiltered().map((p,i) => `${i+1}. ${p.title} [${p.category}]${p.note ? " – " + p.note : ""}`).join("\n");
+  try { await navigator.clipboard.writeText(text); $("suggCopy").textContent = "Copied ✓"; }
+  catch(e) { $("suggCopy").textContent = "Copy not available"; }
+  setTimeout(() => $("suggCopy").textContent = "Copy list", 1800);
+});
+
+function bar(id, labels, data, colors, horizontal, extra){
+  charts[id]?.destroy();
+  charts[id] = new Chart($(id), {
+    type:"bar",
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderRadius:4, borderSkipped:"start",
+      barPercentage:.8, categoryPercentage:.85, maxBarThickness:28 }]},
+    options:{
+      indexAxis: horizontal ? "y" : "x", responsive:true, maintainAspectRatio:false,
+      layout:{ padding:{ right: horizontal ? 30 : 0 } },
+      scales:{
+        x:{ grid:{ color: horizontal ? GRID : "transparent" }, border:{display:false}, ticks:{ precision:0, autoSkip:!horizontal, maxRotation:0 }, beginAtZero:true },
+        y:{ grid:{ color: horizontal ? "transparent" : GRID }, border:{display:false}, ticks:{ precision:0, color:"#14263a",
+             callback(v){ const l = this.getLabelForValue(v); const m = this.chart.width < 420 ? 18 : 34; return horizontal && l.length > m ? l.slice(0,m-1)+"…" : l; } }, beginAtZero:true }
+      },
+      plugins:{ tooltip:{ callbacks:{ label:c => " " + fmt(c.parsed[horizontal?"x":"y"]) + (extra ? " · " + extra(c.dataIndex) : "") } } }
+    },
+    plugins:[ horizontal ? valueLabels : {} ]
+  });
+}
+// selective direct labels: value at the end of each horizontal bar
+const valueLabels = { id:"valueLabels", afterDatasetsDraw(chart){
+  const {ctx} = chart; const meta = chart.getDatasetMeta(0);
+  ctx.save(); ctx.font = "600 12px Inter, system-ui"; ctx.fillStyle = "#14263a"; ctx.textBaseline = "middle";
+  meta.data.forEach((el,i) => { const v = chart.data.datasets[0].data[i]; ctx.fillText(fmt(v), el.x + 6, el.y); });
+  ctx.restore();
+}};
+
+function donut(id, legendId, labels, data, colors){
+  charts[id]?.destroy();
+  const total = data.reduce((a,b)=>a+b,0);
+  charts[id] = new Chart($(id), {
+    type:"doughnut",
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderColor:SURFACE, borderWidth:2, hoverOffset:4 }]},
+    options:{ cutout:"58%", responsive:true, maintainAspectRatio:false,
+      plugins:{ tooltip:{ callbacks:{ label:c => " " + c.label + ": " + fmt(c.parsed) + " (" + pct(c.parsed,total) + ")" } } } }
+  });
+  $(legendId).innerHTML = labels.map((l,i)=>`<li><span class="sw" style="background:${colors[i]}"></span><span class="nm">${esc(l)}</span><span class="n">${fmt(data[i])}</span><span class="p">${pct(data[i],total)}</span></li>`).join("");
+}
+
+function esc(s){ return String(s??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+// auto-refresh every 2 minutes while open
+setInterval(() => { if (token && !$("dash").classList.contains("hidden")) load(); }, 120000);
+if (token) openDash();
+</script>
+</body>
+</html>

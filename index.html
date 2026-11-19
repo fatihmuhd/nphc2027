@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NPHC 2027 – Subject Vote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f7f8; --card:#ffffff; --ink:#14263a; --muted:#5d6b7a; --line:#dbe3e8;
+    --brand:#0f766e; --brand-ink:#ffffff; --brand-soft:#e6f4f2; --warn:#b45309; --err:#b91c1c;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5}
+  header{background:var(--ink);color:#fff;padding:22px 18px 26px}
+  header .wrap{max-width:720px;margin:0 auto}
+  .eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;font-weight:600}
+  h1{font-size:24px;margin:6px 0 4px;line-height:1.25}
+  header p{margin:0;opacity:.85;font-size:15px}
+  main{max-width:720px;margin:-14px auto 40px;padding:0 14px}
+  .steps{display:flex;gap:6px;margin:0 0 14px}
+  .steps div{flex:1;height:5px;border-radius:5px;background:#c9d4db}
+  .steps div.on{background:var(--brand)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 18px;margin-bottom:14px}
+  h2{font-size:19px;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 16px;font-size:14.5px}
+  label{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
+  .opt{font-weight:400;color:var(--muted)}
+  input[type=text],input[type=email],input[type=number],select,textarea{
+    width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:0;border-color:var(--brand)}
+  textarea{min-height:80px;resize:vertical}
+  .row{display:grid;grid-template-columns:110px 1fr;gap:10px}
+  .consent{display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-size:14px;color:var(--muted)}
+  .consent input{margin-top:3px;width:18px;height:18px;accent-color:var(--brand)}
+  .btns{display:flex;gap:10px;margin-top:20px}
+  button{font:inherit;font-weight:600;border-radius:10px;padding:13px 18px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+  button.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);flex:1}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .err{color:var(--err);font-size:13.5px;margin-top:6px;min-height:1px}
+  .counter{position:sticky;top:0;z-index:5;background:var(--brand-soft);color:var(--brand);border:1px solid #b9e1dc;border-radius:10px;padding:10px 12px;font-weight:600;font-size:14px;margin-bottom:12px}
+  .cat{margin-top:18px}
+  .cat h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 8px}
+  .topic{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,background .15s}
+  .topic input{width:20px;height:20px;margin-top:1px;accent-color:var(--brand);flex:none}
+  .topic.sel{border-color:var(--brand);background:var(--brand-soft)}
+  .topic .t{font-weight:500;font-size:15px}
+  .search{margin-bottom:10px}
+  .acc{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden;background:#fff}
+  .acc>button{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:0;border-radius:0;padding:14px 12px;background:#fff;font-weight:600}
+  .acc>button .no{flex:none;width:30px;height:30px;border-radius:8px;background:#eef3f5;color:var(--muted);display:grid;place-items:center;font-size:13px}
+  .acc>button .nm{flex:1;line-height:1.3}
+  .acc>button .ct{flex:none;font-size:12.5px;color:var(--brand);background:var(--brand-soft);border-radius:20px;padding:2px 9px}
+  .acc>button .chev{flex:none;transition:transform .2s;color:var(--muted)}
+  .acc.open>button .chev{transform:rotate(90deg)}
+  .acc .body{display:none;padding:0 10px 6px}
+  .acc.open .body{display:block}
+  .acc .topic{margin-bottom:6px}
+  .nores{color:var(--muted);font-size:14px;padding:10px 2px}
+  .topic .d{font-size:13.5px;color:var(--muted)}
+  .topic.disabled{opacity:.5}
+  .proposal{border:1px dashed #9fb3bf;border-radius:12px;padding:12px;margin-bottom:10px;position:relative}
+  .proposal .rm{position:absolute;top:8px;right:8px;padding:4px 10px;font-size:13px}
+  .proposal label:first-child{margin-top:0}
+  .add{width:100%;border-style:dashed;color:var(--brand)}
+  .review dt{font-size:13px;color:var(--muted);margin-top:10px}
+  .review dd{margin:2px 0 0;font-weight:500}
+  .review ul{margin:4px 0 0;padding-left:20px}
+  .done{text-align:center;padding:34px 18px}
+  .tick{width:64px;height:64px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;margin:0 auto 14px;font-size:32px}
+  .note{font-size:13px;color:var(--muted);background:#fff8eb;border:1px solid #f3dfb5;border-radius:10px;padding:10px 12px;margin-bottom:14px}
+  .bar{height:8px;background:#e5ecef;border-radius:8px;overflow:hidden;margin-top:4px}
+  .bar span{display:block;height:100%;background:var(--brand)}
+  .tally div{margin:10px 0;font-size:14px}
+  .hp{position:absolute;left:-9999px}
+  .anon{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:13px;margin:4px 0 6px;cursor:pointer;font-weight:400;font-size:14.5px}
+  .anon input{width:20px;height:20px;margin-top:1px;accent-color:var(--brand);flex:none}
+  .anon.on{border-color:var(--brand);background:var(--brand-soft)}
+  .anon .d{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+  .hidden{display:none}
+  footer{text-align:center;color:var(--muted);font-size:12.5px;padding:0 14px 30px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="eyebrow" id="hdrEyebrow"></div>
+  <h1 id="hdrTitle"></h1>
+  <p id="hdrSub"></p>
+</div></header>
+
+<main>
+  <div class="steps" aria-hidden="true"><div></div><div></div><div></div></div>
+  <div class="note hidden" id="demoNote">Prototype mode: test votes are kept only in this browser. Connect the GitHub endpoint (see README) to save real votes.</div>
+
+  <!-- STEP 1: BIODATA -->
+  <section class="card" id="step1">
+    <h2>About you</h2>
+    <p class="sub">A few details so the committee knows who is voting. Takes under a minute.</p>
+    <form id="bioForm" novalidate>
+      <label class="anon" id="anonBox" style="margin-top:0"><input type="checkbox" id="anonymous">
+        <span><b>Vote anonymously</b><span class="d">Your name, email and institution won't be asked for or recorded. Only your role, specialty and years in practice are counted, as totals.</span></span></label>
+
+      <div id="idFields">
+      <div class="row">
+        <div>
+          <label for="title">Title</label>
+          <select id="title"><option>Dr</option><option>Prof</option><option>Assoc Prof</option><option>Mr</option><option>Ms</option></select>
+        </div>
+        <div>
+          <label for="name">Full name</label>
+          <input type="text" id="name" autocomplete="name" placeholder="As on your registration">
+        </div>
+      </div>
+      <div class="err" id="e_name"></div>
+
+      <label for="email">Email</label>
+      <input type="email" id="email" autocomplete="email" placeholder="name@hospital.org">
+      <div class="err" id="e_email"></div>
+      </div>
+
+      <label for="role">Professional role</label>
+      <select id="role"></select>
+
+      <label for="specialty">Specialty</label>
+      <select id="specialty"></select>
+      <input type="text" id="specialtyOther" class="hidden" placeholder="Please state your specialty" style="margin-top:8px">
+      <div class="err" id="e_specialty"></div>
+
+      <div id="instField">
+      <label for="institution">Institution / hospital <span class="opt">(optional)</span></label>
+      <input type="text" id="institution" autocomplete="organization">
+      </div>
+
+      <label for="years">Years in practice <span class="opt">(optional)</span></label>
+      <select id="years"><option value="">Prefer not to say</option><option>Less than 5</option><option>5–10</option><option>11–20</option><option>More than 20</option></select>
+
+      <input type="text" id="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+      <label class="consent"><input type="checkbox" id="consent"> <span id="consentText"></span></label>
+      <div class="err" id="e_consent"></div>
+
+      <div class="btns"><button type="submit" class="primary">Continue to voting</button></div>
+    </form>
+  </section>
+
+  <!-- STEP 2: VOTE -->
+  <section class="card hidden" id="step2">
+    <h2>Choose your subjects</h2>
+    <p class="sub" id="voteSub"></p>
+    <div class="counter" id="counter"></div>
+    <input type="text" id="search" class="search" placeholder="Search subjects, e.g. dengue, heat, AI" autocomplete="off">
+    <div id="topics"></div>
+    <div class="nores hidden" id="nores">No subjects match your search.</div>
+
+    <div class="cat">
+      <h3>Your own suggestions <span class="opt" style="text-transform:none;letter-spacing:0">(optional)</span></h3>
+      <p class="sub" style="margin-bottom:10px">Missing something? Propose a subject or speaker. These don't count toward your vote limit.</p>
+      <div id="proposals"></div>
+      <button type="button" class="add" id="addProposal">+ Suggest a subject</button>
+    </div>
+
+    <div class="err" id="e_vote"></div>
+    <div class="btns">
+      <button type="button" id="back1">Back</button>
+      <button type="button" class="primary" id="toReview">Review</button>
+    </div>
+  </section>
+
+  <!-- STEP 3: REVIEW -->
+  <section class="card hidden" id="step3">
+    <h2>Check and submit</h2>
+    <p class="sub">You can go back to change anything.</p>
+    <dl class="review" id="review"></dl>
+    <div class="err" id="e_submit"></div>
+    <div class="btns">
+      <button type="button" id="back2">Back</button>
+      <button type="button" class="primary" id="submit">Submit my vote</button>
+    </div>
+  </section>
+
+  <!-- DONE -->
+  <section class="card done hidden" id="step4">
+    <div class="tick">✓</div>
+    <h2>Thank you<span id="thanksName"></span></h2>
+    <p class="sub">Your vote and suggestions have been received. We appreciate you taking the time to help shape the programme.</p>
+    <p class="sub">The final topics will be decided by the Scientific Committee and announced on the conference website<span id="siteLink"></span>.</p>
+  </section>
+
+</main>
+<footer><span id="foot"></span><br><a href="committee.html" style="color:inherit">Scientific committee login</a></footer>
+
+<script src="config.js"></script>
+<script>
+const CONFIG = window.CONFIG;
+
+const $ = id => document.getElementById(id);
+const DEMO = !CONFIG.endpoint;
+const state = { bio:{}, votes:new Set(), proposals:[] };
+
+// Header & footer
+$("hdrEyebrow").textContent = CONFIG.organiser;
+$("hdrTitle").textContent = CONFIG.conferenceName;
+$("hdrSub").textContent = CONFIG.tagline;
+$("foot").textContent = "Voting closes " + CONFIG.deadline + " · " + CONFIG.organiser;
+$("consentText").textContent = "I agree that my details and vote may be stored and used by the " + CONFIG.organiser + " to plan " + CONFIG.conferenceName + ".";
+if (CONFIG.websiteUrl) $("siteLink").innerHTML = ': <a href="' + esc(CONFIG.websiteUrl) + '" style="color:var(--brand)">' + esc(CONFIG.websiteUrl.replace(/^https?:\/\//,"")) + '</a>';
+$("voteSub").textContent = CONFIG.categories.length + " topics, " + CONFIG.categories.reduce((a,c)=>a+c.topics.length,0) + " subjects. Open a topic and tick up to " + CONFIG.maxVotes + " subjects in total that you'd most like in the programme.";
+if (DEMO) { $("demoNote").classList.remove("hidden"); }
+
+// Dropdowns
+const fill = (sel, items, ph) => { sel.innerHTML = `<option value="">${ph}</option>` + items.map(i=>`<option>${i}</option>`).join(""); };
+fill($("role"), CONFIG.roles, "Select role");
+fill($("specialty"), CONFIG.specialties, "Select specialty");
+$("specialty").addEventListener("change", e => $("specialtyOther").classList.toggle("hidden", e.target.value !== "Other"));
+
+// Navigation
+function show(n){
+  [1,2,3,4].forEach(i => $("step"+i).classList.toggle("hidden", i!==n));
+  document.querySelectorAll(".steps div").forEach((d,i)=>d.classList.toggle("on", i < Math.min(n,3)));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+// Anonymous option
+$("anonymous").addEventListener("change", e => {
+  const on = e.target.checked;
+  $("anonBox").classList.toggle("on", on);
+  $("idFields").classList.toggle("hidden", on); $("instField").classList.toggle("hidden", on);
+  ["e_name","e_email"].forEach(id=>$(id).textContent="");
+});
+// One random id per browser, so an anonymous voter who votes again replaces their earlier vote
+function anonId(){
+  let id; try { id = localStorage.getItem("confvote-anon"); } catch(e){}
+  if (!id) { id = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()); try { localStorage.setItem("confvote-anon", id); } catch(e){} }
+  return id;
+}
+
+// Step 1 validation
+$("bioForm").addEventListener("submit", e => {
+  e.preventDefault();
+  ["e_name","e_email","e_specialty","e_consent"].forEach(id=>$(id).textContent="");
+  const name = $("name").value.trim(), email = $("email").value.trim().toLowerCase();
+  const spec = $("specialty").value === "Other" ? $("specialtyOther").value.trim() : $("specialty").value;
+  let ok = true;
+  const anon = $("anonymous").checked;
+  if (!anon && name.length < 3){ $("e_name").textContent="Please enter your full name."; ok=false; }
+  if (!anon && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ $("e_email").textContent="Please enter a valid email."; ok=false; }
+  if (!spec){ $("e_specialty").textContent="Please choose your specialty."; ok=false; }
+  if (!$("consent").checked){ $("e_consent").textContent="Please tick the consent box to continue."; ok=false; }
+  if (!ok) return;
+  state.bio = anon
+    ? { anonymous:true, anonId:anonId(), role:$("role").value, specialty:spec, years:$("years").value }
+    : { title:$("title").value, name, email, role:$("role").value, specialty:spec,
+        institution:$("institution").value.trim(), years:$("years").value };
+  show(2);
+});
+
+// Step 2: subjects grouped by topic (collapsible) + search
+function renderTopics(){
+  $("topics").innerHTML = CONFIG.categories.map((c,ci) => `
+    <div class="acc" data-ci="${ci}">
+      <button type="button" aria-expanded="false"><span class="no">${String(c.no ?? ci+1).padStart(2,"0")}</span><span class="nm">${esc(c.name)}</span><span class="ct hidden"></span><span class="chev">›</span></button>
+      <div class="body">
+        ${c.topics.map(t => `
+          <label class="topic" data-id="${t.id}">
+            <input type="checkbox" value="${t.id}">
+            <span><span class="t">${esc(t.title)}</span>${t.desc?`<br><span class="d">${esc(t.desc)}</span>`:""}</span>
+          </label>`).join("")}
+      </div>
+    </div>`).join("");
+  $("topics").querySelectorAll(".acc>button").forEach(btn => btn.addEventListener("click", () => {
+    const acc = btn.parentElement, open = !acc.classList.contains("open");
+    acc.classList.toggle("open", open); btn.setAttribute("aria-expanded", open);
+  }));
+  $("topics").querySelectorAll("input").forEach(cb => cb.addEventListener("change", () => {
+    if (cb.checked) state.votes.add(cb.value); else state.votes.delete(cb.value);
+    refreshTopics();
+  }));
+  $("search").addEventListener("input", filterTopics);
+  refreshTopics();
+}
+function filterTopics(){
+  const q = $("search").value.trim().toLowerCase();
+  let any = false;
+  $("topics").querySelectorAll(".acc").forEach(acc => {
+    const topicHit = acc.querySelector(".nm").textContent.toLowerCase().includes(q);
+    let hits = 0;
+    acc.querySelectorAll(".topic").forEach(el => {
+      const show = !q || topicHit || el.textContent.toLowerCase().includes(q);
+      el.classList.toggle("hidden", !show); if (show) hits++;
+    });
+    acc.classList.toggle("hidden", q && !hits);
+    if (q) acc.classList.toggle("open", hits > 0);
+    if (hits) any = true;
+  });
+  if (!q) $("topics").querySelectorAll(".acc").forEach(acc => acc.classList.remove("open"));
+  $("nores").classList.toggle("hidden", any);
+}
+function refreshTopics(){
+  const full = state.votes.size >= CONFIG.maxVotes;
+  $("topics").querySelectorAll(".topic").forEach(el => {
+    const cb = el.querySelector("input"), on = state.votes.has(cb.value);
+    cb.checked = on; el.classList.toggle("sel", on);
+    cb.disabled = full && !on; el.classList.toggle("disabled", full && !on);
+  });
+  $("topics").querySelectorAll(".acc").forEach(acc => {
+    const n = acc.querySelectorAll("input:checked").length, ct = acc.querySelector(".ct");
+    ct.textContent = n + " selected"; ct.classList.toggle("hidden", !n);
+  });
+  const left = CONFIG.maxVotes - state.votes.size;
+  $("counter").textContent = `${state.votes.size} of ${CONFIG.maxVotes} subjects selected` + (left ? ` · ${left} left` : " · limit reached");
+}
+
+// Proposals
+function renderProposals(){
+  $("proposals").innerHTML = state.proposals.map((p,i) => `
+    <div class="proposal">
+      <button type="button" class="rm" data-i="${i}">Remove</button>
+      <label>Topic</label>
+      <select data-i="${i}" data-k="category">
+        ${CONFIG.categories.map(c=>`<option ${p.category===c.name?"selected":""}>${esc(c.name)}</option>`).join("")}
+        <option ${p.category==="Other"?"selected":""}>Other</option>
+      </select>
+      <label>Proposed subject</label>
+      <input type="text" data-i="${i}" data-k="title" value="${esc(p.title)}" placeholder="e.g. Tuberculosis screening among migrant workers">
+      <label>Why it matters / suggested speaker <span class="opt">(optional)</span></label>
+      <textarea data-i="${i}" data-k="note" placeholder="Brief reason, or a speaker you'd recommend">${esc(p.note)}</textarea>
+    </div>`).join("");
+  $("proposals").querySelectorAll("[data-k]").forEach(el => el.addEventListener("input", () => { state.proposals[el.dataset.i][el.dataset.k] = el.value; }));
+  $("proposals").querySelectorAll(".rm").forEach(b => b.addEventListener("click", () => { state.proposals.splice(b.dataset.i,1); renderProposals(); }));
+  $("addProposal").classList.toggle("hidden", state.proposals.length >= 3);
+}
+$("addProposal").addEventListener("click", () => { state.proposals.push({category:CONFIG.categories[0].name,title:"",note:""}); renderProposals(); });
+
+$("back1").addEventListener("click", () => show(1));
+$("toReview").addEventListener("click", () => {
+  const props = state.proposals.filter(p => p.title.trim());
+  if (!state.votes.size && !props.length){ $("e_vote").textContent = "Pick at least one subject or suggest your own."; return; }
+  $("e_vote").textContent = "";
+  const all = CONFIG.categories.flatMap(c=>c.topics);
+  const b = state.bio;
+  $("review").innerHTML = `
+    <dt>Voter</dt><dd>${b.anonymous ? "Anonymous" : esc(b.title+" "+b.name)}</dd>
+    ${b.anonymous ? "" : `<dt>Email</dt><dd>${esc(b.email)}</dd>`}
+    <dt>Role · Specialty</dt><dd>${esc([b.role,b.specialty].filter(Boolean).join(" · "))}</dd>
+    ${b.institution?`<dt>Institution</dt><dd>${esc(b.institution)}</dd>`:""}
+    <dt>Subjects voted (${state.votes.size})</dt><dd>${state.votes.size?CONFIG.categories.filter(c=>c.topics.some(t=>state.votes.has(t.id))).map(c=>`<div style="margin-top:6px;font-size:13px;color:var(--muted)">${esc(c.name)}</div><ul>${c.topics.filter(t=>state.votes.has(t.id)).map(t=>`<li>${esc(t.title)}</li>`).join("")}</ul>`).join(""):"None"}</dd>
+    <dt>Your suggestions (${props.length})</dt><dd>${props.length?`<ul>${props.map(p=>`<li>${esc(p.title)} <span class="opt">(${esc(p.category)})</span></li>`).join("")}</ul>`:"None"}</dd>`;
+  show(3);
+});
+$("back2").addEventListener("click", () => show(2));
+
+// Submit
+$("submit").addEventListener("click", async () => {
+  const btn = $("submit"); btn.disabled = true; btn.textContent = "Submitting…"; $("e_submit").textContent = "";
+  const payload = {
+    conference: CONFIG.conferenceName,
+    submittedAt: new Date().toISOString(),
+    voter: state.bio,
+    votes: [...state.votes],
+    proposals: state.proposals.filter(p=>p.title.trim()).map(p=>({category:p.category,title:p.title.trim(),note:p.note.trim()})),
+    hp: $("website").value
+  };
+  try {
+    if (DEMO) { demoSave(payload); }
+    else {
+      const r = await fetch(CONFIG.endpoint, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload) });
+      if (!r.ok) throw new Error((await r.text()) || r.status);
+    }
+    $("thanksName").textContent = state.bio.anonymous ? "" : ", " + state.bio.title + " " + state.bio.name.split(" ")[0];
+    show(4);
+  } catch(err) {
+    $("e_submit").textContent = "Sorry, your vote couldn't be saved. Please check your connection and try again.";
+  } finally { btn.disabled = false; btn.textContent = "Submit my vote"; }
+});
+
+// Prototype-only storage (one vote per email, latest wins)
+let demoStore = {};
+try { demoStore = JSON.parse(localStorage.getItem("confvote-demo")||"{}"); } catch(e){}
+function demoSave(p){ demoStore[p.voter.anonymous ? "anon:" + p.voter.anonId : p.voter.email] = p; try{ localStorage.setItem("confvote-demo", JSON.stringify(demoStore)); }catch(e){} }
+function esc(s){ return String(s??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+renderTopics(); renderProposals(); show(1);
+</script>
+</body>
+</html>
