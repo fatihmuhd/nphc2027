@@ -8,9 +8,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root{
-    --bg:#f4f7f8; --surface:#fcfcfb; --ink:#14263a; --muted:#52514e; --faint:#8a8f96; --line:#dbe3e8;
-    --brand:#0f766e; --brand-soft:#e6f4f2; --err:#b91c1c;
+    --bg:#f4f7f8; --surface:#fcfcfb; --ink:#14263a; --muted:#52514e; --line:#dbe3e8; --brand:#0f766e; --brand-soft:#e6f4f2; --err:#b91c1c;
     --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+    /* diverging Likert scale: red (least) – gray (neutral) – blue (most) */
+    --l1:#e34948; --l2:#f2a29d; --l3:#d9d8d3; --l4:#8db8ec; --l5:#2a78d6;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45}
@@ -23,23 +24,24 @@
   button{font:inherit;font-weight:600;border-radius:10px;padding:10px 16px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
   button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
-  /* login */
   .login{max-width:380px;margin:40px auto}
   .login h2{margin:0 0 4px;font-size:20px}
   .login p{color:var(--muted);margin:0 0 16px;font-size:14px}
   label{display:block;font-weight:600;font-size:14px;margin:12px 0 6px}
-  input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit}
-  input:focus{outline:2px solid var(--brand);border-color:var(--brand)}
+  input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+  input:focus,select:focus{outline:2px solid var(--brand);border-color:var(--brand)}
   .err{color:var(--err);font-size:13.5px;min-height:18px;margin-top:8px}
   .login button{width:100%;margin-top:14px;padding:13px}
   .note{font-size:13px;color:var(--muted);background:#fff8eb;border:1px solid #f3dfb5;border-radius:10px;padding:10px 12px;margin-bottom:14px}
-  /* dashboard */
   .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;color:var(--muted);font-size:13.5px}
   .toolbar .sp{flex:1}
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
   .kpi .lbl{font-size:12.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
   .kpi .val{font-size:32px;font-weight:700;line-height:1.1;margin-top:6px;font-variant-numeric:tabular-nums}
+  .kpi .val small{font-size:16px;color:var(--muted);font-weight:600}
   .kpi .ctx{font-size:13px;color:var(--muted);margin-top:4px}
+  .meter{height:8px;background:#e5ecef;border-radius:8px;margin-top:8px;overflow:hidden}
+  .meter span{display:block;height:100%;background:var(--brand);border-radius:8px}
   .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
   .wide{grid-column:1/-1}
   @media (max-width:760px){.grid{grid-template-columns:1fr}}
@@ -50,39 +52,45 @@
   .pie .chartbox{width:180px;height:180px;flex:none}
   .legend{flex:1;min-width:180px;list-style:none;margin:0;padding:0;font-size:13.5px}
   .legend li{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef2f4}
-  .legend .sw{width:12px;height:12px;border-radius:3px;flex:none}
+  .sw{width:12px;height:12px;border-radius:3px;flex:none;display:inline-block}
   .legend .nm{flex:1}
   .legend .n{font-variant-numeric:tabular-nums;font-weight:600}
   .legend .p{color:var(--muted);width:44px;text-align:right;font-variant-numeric:tabular-nums}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .tabs button{padding:8px 14px;font-size:14px}
+  .tabs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .ctrl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:13px;color:var(--muted)}
+  .ctrl select{width:auto;padding:7px 10px;font-size:13.5px}
+  .lkey{display:flex;gap:12px;flex-wrap:wrap}
+  .lkey span{display:inline-flex;align-items:center;gap:5px}
+  .rank{list-style:none;margin:0;padding:0}
+  .rank li{padding:10px 0;border-bottom:1px solid #eef2f4}
+  .rank .top{display:flex;gap:10px;align-items:flex-start}
+  .rank .code{flex:none;font-weight:700;font-size:13px;width:34px;color:var(--muted);padding-top:1px}
+  .rank .ti{flex:1;font-weight:600;font-size:14px;line-height:1.35}
+  .rank .sc{flex:none;text-align:right;min-width:62px}
+  .rank .sc b{font-size:18px;font-variant-numeric:tabular-nums}
+  .rank .sc div{font-size:11.5px;color:var(--muted)}
+  .rank .scope{font-size:12.5px;color:var(--muted);margin:2px 0 6px 44px}
+  .stack{display:flex;height:14px;margin-left:44px;gap:2px}
+  .stack div{height:100%;min-width:0}
+  .stack div:first-child{border-radius:4px 0 0 4px}
+  .stack div:last-child{border-radius:0 4px 4px 0}
+  .stack .empty{flex:1;background:#eef2f4;border-radius:4px}
   .sugg{list-style:none;margin:0;padding:0;max-height:480px;overflow:auto}
   .sugg li{padding:10px 0;border-bottom:1px solid #eef2f4;font-size:14px}
   .sugg .st{font-weight:600}
-  .sugg .nt{color:var(--ink);opacity:.85;margin-top:3px;font-size:13.5px}
+  .sugg .nt{opacity:.85;margin-top:3px;font-size:13.5px}
   .sugg .cat{font-size:12px;color:var(--muted);margin-top:3px}
-  .sgcounts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-  .sgcounts button{padding:5px 10px;font-size:12.5px;font-weight:500;border-radius:20px}
-  .sgcounts button.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
-  .sgcounts b{font-variant-numeric:tabular-nums;margin-left:4px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .chips button{padding:5px 12px;font-size:13px;font-weight:500;border-radius:20px}
+  .chips button.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+  .chips b{margin-left:4px;font-variant-numeric:tabular-nums}
   details{margin-top:10px;font-size:13px;color:var(--muted)}
-  table{border-collapse:collapse;width:100%;font-size:13px;margin-top:6px}
-  td,th{padding:5px 6px;border-bottom:1px solid #eef2f4;text-align:left}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:6px}
+  td,th{padding:5px 6px;border-bottom:1px solid #eef2f4;text-align:left;vertical-align:top}
   td.n{text-align:right;font-variant-numeric:tabular-nums}
-  .rank{list-style:none;margin:0;padding:0}
-  .rank li{padding:7px 0}
-  .rank .top{display:flex;gap:8px;align-items:baseline;font-size:14px}
-  .rank .ti{flex:1;color:var(--ink)}
-  .rank .v{font-weight:600;font-variant-numeric:tabular-nums}
-  .rank .pc{color:var(--muted);font-size:12.5px;width:40px;text-align:right;font-variant-numeric:tabular-nums}
-  .rank .track{height:12px;margin-top:4px}
-  .rank .fill{height:100%;border-radius:0 4px 4px 0;min-width:2px}
-  .rlg{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin-bottom:8px;color:var(--muted)}
-  .rlg span{display:inline-flex;align-items:center;gap:6px}
-  .rlg i{width:12px;height:12px;border-radius:3px;display:inline-block}
-  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-  .filters select{padding:9px 10px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:#fff;max-width:100%}
-  .rank .meta{font-size:12px;color:var(--muted);margin-top:1px}
-  .tag{display:inline-block;font-size:11px;border-radius:10px;padding:0 7px;margin-left:4px;border:1px solid var(--line)}
-  .hidden{display:none}
+  .hidden{display:none !important}
 </style>
 </head>
 <body>
@@ -92,12 +100,11 @@
 </div></header>
 
 <main>
-  <!-- LOGIN -->
   <section id="loginView" class="login">
     <div class="note hidden" id="demoNote">Prototype mode — sign in with <b>demo</b> / <b>demo2027</b> to see sample data.</div>
     <div class="card">
       <h2>Committee login</h2>
-      <p>For registered scientific committee members only. Results are shown as totals — no individual voter details.</p>
+      <p>For registered scientific committee members only. Results are shown as totals — no individual respondent details.</p>
       <form id="loginForm" novalidate>
         <label for="user">Username</label>
         <input id="user" autocomplete="username" autocapitalize="none">
@@ -109,46 +116,47 @@
     </div>
   </section>
 
-  <!-- DASHBOARD -->
   <section id="dash" class="hidden">
-    <div class="note hidden" id="sampleNote">Showing sample data (prototype). Real results appear once the GitHub connection is set up.</div>
-    <div class="toolbar">
-      <span id="updated"></span><span class="sp"></span>
-      <button id="refresh">Refresh</button>
-    </div>
+    <div class="note hidden" id="sampleNote">Showing sample data (prototype).</div>
+    <div class="toolbar"><span id="updated"></span><span class="sp"></span><button id="refresh">Refresh</button></div>
 
     <div class="kpis">
-      <div class="card kpi"><div class="lbl">Voters</div><div class="val" id="k_voters">–</div><div class="ctx" id="k_today"></div></div>
-      <div class="card kpi"><div class="lbl">Subject votes cast</div><div class="val" id="k_votes">–</div><div class="ctx" id="k_avg"></div></div>
-      <div class="card kpi" style="cursor:pointer" onclick="document.getElementById('suggCard').scrollIntoView({behavior:'smooth'})"><div class="lbl">Voter suggestions</div><div class="val" id="k_props">–</div><div class="ctx">subjects not on the list · view ›</div></div>
-      <div class="card kpi"><div class="lbl">Leading topic</div><div class="val" id="k_topN" style="font-size:24px">–</div><div class="ctx" id="k_top"></div></div>
+      <div class="card kpi"><div class="lbl">Respondents</div><div class="val"><span id="k_voters">–</span> <small id="k_limit"></small></div><div class="meter"><span id="k_meter" style="width:0"></span></div><div class="ctx" id="k_left"></div></div>
+      <div class="card kpi"><div class="lbl">New today</div><div class="val" id="k_today">–</div><div class="ctx" id="k_anon"></div></div>
+      <div class="card kpi" style="cursor:pointer" onclick="document.getElementById('suggCard').scrollIntoView({behavior:'smooth'})"><div class="lbl">Suggestions</div><div class="val" id="k_props">–</div><div class="ctx">new topics proposed · view ›</div></div>
+      <div class="card kpi"><div class="lbl">Highest rated</div><div class="val" id="k_best">–</div><div class="ctx" id="k_bestT"></div></div>
     </div>
 
     <div class="grid">
       <div class="card wide">
-        <h3>Votes by topic</h3>
-        <p class="sub">Total subject votes in each of the 16 topics</p>
-        <ul class="rank" id="topicList"></ul>
-      </div>
-
-      <div class="card wide">
-        <h3>Subject ranking</h3>
-        <p class="sub">Voters who picked each subject · <span id="subjCount"></span></p>
-        <div class="filters">
-          <select id="topicFilter"></select>
-          <select id="statusFilter"><option value="">New & returning</option><option value="New">New proposals only</option><option value="Returning">Returning only</option></select>
+        <h3>Topic ratings</h3>
+        <p class="sub">Average score (1 = least like, 5 = most like) and how respondents spread across the scale</p>
+        <div class="tabs" id="tabs"></div>
+        <div class="ctrl">
+          <label style="margin:0;font-weight:500">Sort <select id="sortBy"><option value="mean">Highest average</option><option value="top2">Most rated 4–5</option><option value="code">Topic code</option></select></label>
+          <span class="lkey" id="lkey"></span>
         </div>
         <ul class="rank" id="rankList"></ul>
-        <button id="showAll" style="margin-top:8px">Show all</button>
-        <details><summary>Show as table</summary><div style="max-height:360px;overflow:auto"><table id="rankTable"></table></div></details>
+        <details><summary>Show as table</summary><div style="overflow:auto"><table id="rankTable"></table></div></details>
+      </div>
+
+      <div class="card">
+        <h3>Average score by session type</h3>
+        <p class="sub">Mean of all ratings in each session type</p>
+        <div class="chartbox" style="height:200px"><canvas id="sessChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h3>Response capacity</h3>
+        <p class="sub">Survey closes automatically at the limit</p>
+        <div class="pie"><div class="chartbox"><canvas id="capChart"></canvas></div><ul class="legend" id="capLegend"></ul></div>
       </div>
 
       <div class="card wide" id="suggCard">
-        <h3>Voter suggestions (not on the list)</h3>
-        <p class="sub">Subjects proposed by voters, with their reasons · names are not shown</p>
-        <div class="sgcounts" id="suggCounts"></div>
-        <div class="filters">
-          <select id="suggTopic"></select>
+        <h3>Suggested topics (not on the list)</h3>
+        <p class="sub">Proposed by respondents for each session type · names are not shown</p>
+        <div class="chips" id="suggChips"></div>
+        <div class="ctrl">
           <input id="suggSearch" type="text" placeholder="Search suggestions" style="flex:1;min-width:160px;padding:9px 10px;font-size:14px">
           <button id="suggCopy" type="button">Copy list</button>
         </div>
@@ -157,35 +165,28 @@
       </div>
 
       <div class="card">
-        <h3>New vs returning subjects</h3>
-        <p class="sub">Share of all subject votes</p>
-        <div class="pie"><div class="chartbox"><canvas id="catChart"></canvas></div><ul class="legend" id="catLegend"></ul></div>
-      </div>
-
-      <div class="card">
-        <h3>Voters by professional role</h3>
-        <p class="sub">Share of voters</p>
+        <h3>Respondents by professional role</h3>
+        <p class="sub">Share of respondents</p>
         <div class="pie"><div class="chartbox"><canvas id="roleChart"></canvas></div><ul class="legend" id="roleLegend"></ul></div>
       </div>
 
       <div class="card">
-        <h3>Voters by specialty</h3>
-        <p class="sub">Top 10; the rest grouped as “All others” · PHM = Public Health Medicine</p>
+        <h3>Respondents by specialty</h3>
+        <p class="sub">Top 10; the rest grouped · PHM = Public Health Medicine</p>
         <div class="chartbox" id="specBox"><canvas id="specChart"></canvas></div>
       </div>
 
       <div class="card">
         <h3>Years in practice</h3>
-        <p class="sub">Voters who answered</p>
-        <div class="chartbox" style="height:240px"><canvas id="yearsChart"></canvas></div>
+        <p class="sub">Respondents who answered</p>
+        <div class="chartbox" style="height:220px"><canvas id="yearsChart"></canvas></div>
       </div>
 
-      <div class="card wide">
-        <h3>Voting activity</h3>
-        <p class="sub">New voters per day</p>
+      <div class="card">
+        <h3>Responses per day</h3>
+        <p class="sub">New respondents each day</p>
         <div class="chartbox" style="height:220px"><canvas id="dayChart"></canvas></div>
       </div>
-
     </div>
   </section>
 </main>
@@ -197,20 +198,23 @@ const $ = id => document.getElementById(id);
 const DEMO = !CONFIG.endpoint;
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const SERIES = ["--s1","--s2","--s3","--s4","--s5","--s6","--s7","--s8"].map(css);
-const SURFACE = css("--surface"), MUTED = css("--muted"), GRID = "#e8edf0";
-const allTopics = CONFIG.categories.flatMap(c => c.topics.map(t => ({...t, cat:c.name})));
+const LIK = ["--l1","--l2","--l3","--l4","--l5"].map(css);
+const SURFACE = css("--surface"), GRID = "#e8edf0";
+const SESSIONS = CONFIG.sessions;
+const allTopics = SESSIONS.flatMap(s => s.topics.map(t => ({...t, session:s.type})));
+const charts = {}, state = { tab: SESSIONS[0].type, suggSession: "" };
 let token = null; try { token = sessionStorage.getItem("cv-token"); } catch(e){}
-const charts = {};
+const fmt = n => Number(n).toLocaleString();
+const pct = (n,t) => t ? Math.round(n/t*100) + "%" : "0%";
+function esc(s){ return String(s??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
-$("confName").textContent = CONFIG.conferenceName + " · Voting dashboard";
+$("confName").textContent = CONFIG.conferenceName + " · Topic survey dashboard";
 if (DEMO) $("demoNote").classList.remove("hidden");
-
 Chart.defaults.font.family = "Inter, system-ui, sans-serif";
-Chart.defaults.color = MUTED;
+Chart.defaults.color = css("--muted");
 Chart.defaults.plugins.legend.display = false;
 Chart.defaults.plugins.tooltip.backgroundColor = "#14263a";
 Chart.defaults.plugins.tooltip.padding = 10;
-Chart.defaults.animation.duration = 400;
 
 /* ---------- Login ---------- */
 $("loginForm").addEventListener("submit", async e => {
@@ -220,34 +224,26 @@ $("loginForm").addEventListener("submit", async e => {
   if (!u || !p) { $("loginErr").textContent = "Enter your username and password."; return; }
   $("loginBtn").disabled = true; $("loginBtn").textContent = "Signing in…";
   try {
-    if (DEMO) {
-      if (u !== "demo" || p !== "demo2027") throw new Error("bad");
-      token = "demo";
-    } else {
+    if (DEMO) { if (u !== "demo" || p !== "demo2027") throw 0; token = "demo"; }
+    else {
       const r = await fetch(CONFIG.endpoint + "/login", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username:u,password:p}) });
-      if (!r.ok) throw new Error("bad");
-      token = (await r.json()).token;
+      if (!r.ok) throw 0; token = (await r.json()).token;
     }
     try { sessionStorage.setItem("cv-token", token); } catch(e){}
-    $("pass").value = "";
-    await openDash();
-  } catch(err) {
-    $("loginErr").textContent = "Username or password is incorrect.";
-  } finally { $("loginBtn").disabled = false; $("loginBtn").textContent = "Sign in"; }
+    $("pass").value = ""; await openDash();
+  } catch(err) { $("loginErr").textContent = "Username or password is incorrect."; }
+  finally { $("loginBtn").disabled = false; $("loginBtn").textContent = "Sign in"; }
 });
 $("logout").addEventListener("click", () => {
   token = null; try { sessionStorage.removeItem("cv-token"); } catch(e){}
   $("dash").classList.add("hidden"); $("logout").classList.add("hidden"); $("loginView").classList.remove("hidden");
 });
 $("refresh").addEventListener("click", () => load());
-
 async function openDash(){
   $("loginView").classList.add("hidden"); $("dash").classList.remove("hidden"); $("logout").classList.remove("hidden");
   $("sampleNote").classList.toggle("hidden", !DEMO);
   await load();
 }
-
-/* ---------- Data ---------- */
 async function load(){
   let s;
   if (DEMO) s = sampleStats();
@@ -257,212 +253,148 @@ async function load(){
     if (!r.ok) { $("updated").textContent = "Couldn't load results. Try Refresh."; return; }
     s = await r.json();
   }
-  render(s);
+  state.s = s; render();
 }
 
-// Prototype data: deterministic sample + any test votes made in this browser
+/* ---------- Sample data (prototype only) ---------- */
 function sampleStats(){
-  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  const weights = {}; allTopics.forEach(t => weights[t.id] = Math.pow(rnd(),3)*0.09 + 0.004);
-  const specW = CONFIG.specialties.map((_,i)=> 1/(1+i*0.25));
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const pick = (arr,w) => { const t=w.reduce((a,b)=>a+b,0); let r=rnd()*t; for(let i=0;i<arr.length;i++){ if((r-=w[i])<0) return arr[i]; } return arr[0]; };
-  const s = { updatedAt:new Date().toISOString(), totalVoters:0, totalVotes:0, topics:{}, specialty:{}, role:{}, years:{}, daily:{}, proposals:[] };
-  const N = 186;
-  for (let i=0;i<N;i++){
-    const day = new Date(Date.now() - Math.floor(Math.pow(rnd(),0.7)*14)*864e5).toISOString().slice(0,10);
-    s.daily[day]=(s.daily[day]||0)+1;
-    const sp = pick(CONFIG.specialties, specW);
-    s.specialty[sp]=(s.specialty[sp]||0)+1;
-    const ro = pick(CONFIG.roles,[5,3,3,2,1.2,.6,.4]); s.role[ro]=(s.role[ro]||0)+1;
+  const s = { updatedAt:new Date().toISOString(), totalVoters:97, anonymousVoters:23, limit:CONFIG.maxVoters, topics:{}, specialty:{}, role:{}, years:{}, daily:{}, proposals:[] };
+  allTopics.forEach(t => { const bias = rnd()*2.2 - 0.6; const dist=[0,0,0,0,0];
+    for (let i=0;i<s.totalVoters;i++){ const v = Math.max(1, Math.min(5, Math.round(3 + bias + (rnd()+rnd()-1)*2.2))); dist[v-1]++; }
+    const n = s.totalVoters, sum = dist.reduce((a,c,i)=>a+c*(i+1),0);
+    s.topics[t.id] = { n, dist, mean:+(sum/n).toFixed(2), top2:+((dist[3]+dist[4])/n).toFixed(3) }; });
+  const specW = CONFIG.specialties.map((_,i)=>1/(1+i*0.3));
+  for (let i=0;i<s.totalVoters;i++){
+    const sp = pick(CONFIG.specialties, specW); s.specialty[sp]=(s.specialty[sp]||0)+1;
+    const ro = pick(CONFIG.roles,[5,2,3,2,1.2,.8,.4]); s.role[ro]=(s.role[ro]||0)+1;
     if (rnd()>.15){ const y = pick(CONFIG.years,[2,3,3,2]); s.years[y]=(s.years[y]||0)+1; }
-    let n=0; allTopics.forEach(t => { if (n<CONFIG.maxVotes && rnd() < (weights[t.id]??.3)) { s.topics[t.id]=(s.topics[t.id]||0)+1; n++; } });
-    s.totalVotes += n;
+    const d = new Date(Date.now() - Math.floor(Math.pow(rnd(),0.7)*12)*864e5).toISOString().slice(0,10); s.daily[d]=(s.daily[d]||0)+1;
   }
-  s.totalVoters = N; s.anonymousVoters = 41;
   const ago = d => new Date(Date.now()-d*864e5).toISOString().slice(0,10);
   s.proposals = [
-    {category:"Infectious disease surveillance and health security", title:"Tuberculosis screening among migrant workers", note:"High TB burden in construction and plantation sectors; current screening misses undocumented workers.", date:ago(1)},
-    {category:"Nutrition, physical activity and chronic disease prevention", title:"GLP-1 medicines and population obesity strategy", note:"Rising demand and cost; what is the public health position?", date:ago(2)},
-    {category:"Public health workforce and education", title:"Leadership development for new public health specialists", note:"", date:ago(4)},
-    {category:"Other", title:"Road traffic injury prevention among motorcyclists", note:"Leading cause of death in young Malaysians, not covered in any topic.", date:ago(5)},
-    {category:"Mental health, gender and digital life", title:"Online gambling harms among young adults", note:"Suggest a speaker from the national addiction programme.", date:ago(7)},
-    {category:"Other", title:"Drowning prevention during monsoon floods", note:"Children and flood evacuees at risk every year.", date:ago(9)},
-    {category:"Infectious disease surveillance and health security", title:"Leptospirosis after floods: surveillance and early treatment", note:"", date:ago(10)}
+    {session:"Plenary", title:"Health in all policies: lessons from ASEAN neighbours", note:"Regional comparison would suit the 'without boundaries' theme.", date:ago(1)},
+    {session:"Plenary", title:"Financing prevention: getting value from public health spending", note:"", date:ago(3)},
+    {session:"Symposium", title:"Tuberculosis screening among migrant workers", note:"High burden in construction and plantation sectors.", date:ago(1)},
+    {session:"Symposium", title:"Road traffic injury prevention among motorcyclists", note:"Leading cause of death in young Malaysians.", date:ago(4)},
+    {session:"Symposium", title:"Leptospirosis after floods", note:"Suggest speaker from state CDC unit.", date:ago(6)},
+    {session:"Workshop", title:"Writing policy briefs that get read", note:"Practical skill for public health specialists.", date:ago(2)},
+    {session:"Workshop", title:"Hands-on outbreak investigation with R", note:"", date:ago(5)}
   ];
-  // fold in test votes submitted on the voting page in this browser
-  try {
-    Object.values(JSON.parse(localStorage.getItem("confvote-demo")||"{}")).forEach(v => {
-      s.totalVoters++; s.totalVotes += v.votes.length; if (v.voter.anonymous) s.anonymousVoters++;
-      v.votes.forEach(id => s.topics[id]=(s.topics[id]||0)+1);
-      s.specialty[v.voter.specialty]=(s.specialty[v.voter.specialty]||0)+1;
-      if (v.voter.role) s.role[v.voter.role]=(s.role[v.voter.role]||0)+1;
-      if (v.voter.years) s.years[v.voter.years]=(s.years[v.voter.years]||0)+1;
-      const d=v.submittedAt.slice(0,10); s.daily[d]=(s.daily[d]||0)+1;
-      v.proposals.forEach(p => s.proposals.push({category:p.category,title:p.title,note:p.note,date:v.submittedAt.slice(0,10)}));
-    });
-  } catch(e){}
   return s;
 }
 
 /* ---------- Render ---------- */
-const fmt = n => n.toLocaleString();
-const pct = (n,t) => t ? Math.round(n/t*100) + "%" : "0%";
-
-function render(s){
-  const updated = new Date(s.updatedAt);
-  $("updated").textContent = "Last updated " + updated.toLocaleString([], {dateStyle:"medium", timeStyle:"short"});
-
-  // KPIs
-  const today = new Date().toISOString().slice(0,10);
-  $("k_voters").textContent = fmt(s.totalVoters);
-  $("k_today").textContent = "+" + fmt(s.daily[today]||0) + " today · " + fmt(s.anonymousVoters||0) + " anonymous";
-  $("k_votes").textContent = fmt(s.totalVotes);
-  $("k_avg").textContent = (s.totalVoters ? (s.totalVotes/s.totalVoters).toFixed(1) : "0") + " picks per voter (max " + CONFIG.maxVotes + ")";
+function render(){
+  const s = state.s;
+  $("updated").textContent = "Last updated " + new Date(s.updatedAt).toLocaleString([], {dateStyle:"medium", timeStyle:"short"});
+  const limit = s.limit || CONFIG.maxVoters, today = new Date().toISOString().slice(0,10);
+  $("k_voters").textContent = fmt(s.totalVoters); $("k_limit").textContent = "/ " + limit;
+  $("k_meter").style.width = Math.min(100, s.totalVoters/limit*100) + "%";
+  $("k_left").textContent = s.totalVoters >= limit ? "Limit reached — survey closed" : fmt(limit - s.totalVoters) + " places left";
+  $("k_today").textContent = "+" + fmt(s.daily[today]||0);
+  $("k_anon").textContent = fmt(s.anonymousVoters||0) + " anonymous in total";
   $("k_props").textContent = fmt(s.proposals.length);
-  const ranked = allTopics.map(t => ({...t, n:s.topics[t.id]||0})).sort((a,b)=>b.n-a.n);
-  const topicTotals = CONFIG.categories.map(c => ({name:c.name, no:c.no, n:c.topics.reduce((a,t)=>a+(s.topics[t.id]||0),0)})).sort((a,b)=>b.n-a.n);
-  const lead = topicTotals[0];
-  $("k_topN").textContent = lead && lead.n ? pct(lead.n, s.totalVotes) : "–";
-  $("k_top").textContent = lead && lead.n ? lead.name + " (share of all votes)" : "No votes yet";
+  const best = allTopics.map(t=>({...t, ...(s.topics[t.id]||{mean:0})})).sort((a,b)=>b.mean-a.mean)[0];
+  $("k_best").textContent = best && best.mean ? best.mean.toFixed(1) : "–";
+  $("k_bestT").textContent = best && best.mean ? `${best.id} · ${best.title}` : "No ratings yet";
 
-  // Votes by topic — 16 rows, single color (one measure)
-  const maxT = Math.max(1, ...topicTotals.map(t=>t.n));
-  $("topicList").innerHTML = topicTotals.map((t,i)=>`<li>
-      <div class="top"><span class="ti">${i+1}. ${esc(t.name)}</span><span class="v">${fmt(t.n)}</span><span class="pc">${pct(t.n,s.totalVotes)}</span></div>
-      <div class="track"><div class="fill" style="width:${t.n/maxT*100}%;background:${SERIES[0]}"></div></div></li>`).join("");
+  renderTabs(); renderRanking();
 
-  // Subject ranking with filters
-  state.ranked = ranked; state.s = s;
-  renderSubjects();
+  const sessMeans = SESSIONS.map(se => { let n=0,sum=0; se.topics.forEach(t=>{ const x=s.topics[t.id]; if(x&&x.n){ n+=x.n; sum+=x.mean*x.n; } }); return n ? +(sum/n).toFixed(2) : 0; });
+  bar("sessChart", SESSIONS.map(x=>x.type), sessMeans, SERIES[0], true, i => "average of all " + SESSIONS[i].type.toLowerCase() + " ratings", 5);
 
-  // New vs returning (doughnut, 2 slots)
-  const nv = ranked.filter(t=>t.status==="New").reduce((a,t)=>a+t.n,0), rv = ranked.filter(t=>t.status==="Returning").reduce((a,t)=>a+t.n,0);
-  donut("catChart", "catLegend", ["New proposals","Returning subjects"], [nv, rv], [SERIES[0], SERIES[1]]);
+  const used = Math.min(s.totalVoters, limit);
+  donut("capChart","capLegend",["Responses received","Places remaining"],[used, Math.max(0,limit-used)],[SERIES[0], LIK[2]]);
 
-  // Voters by role (doughnut) — fixed order from config, never re-sorted by count
-  const roles = CONFIG.roles.filter(r => s.role[r]);
-  const extraRoles = Object.keys(s.role).filter(r => !CONFIG.roles.includes(r));
-  const roleLabels = [...roles, ...(extraRoles.length?["Other"]:[])];
-  const roleVals = [...roles.map(r=>s.role[r]), ...(extraRoles.length?[extraRoles.reduce((a,r)=>a+s.role[r],0)]:[])];
-  donut("roleChart", "roleLegend", roleLabels, roleVals, roleLabels.map(l => SERIES[Math.max(0, CONFIG.roles.indexOf(l)) % 8] ));
-
-  // Specialty — top 10 + all others, single color (magnitude, one series)
-  const spec = Object.entries(s.specialty).sort((a,b)=>b[1]-a[1]);
-  const top10 = spec.slice(0,10), rest = spec.slice(10).reduce((a,[,n])=>a+n,0);
+  const roleLabels = CONFIG.roles.filter(r => s.role[r]);
+  donut("roleChart","roleLegend",roleLabels, roleLabels.map(r=>s.role[r]), roleLabels.map(l=>SERIES[CONFIG.roles.indexOf(l)%8]));
+  const spec = Object.entries(s.specialty).sort((a,b)=>b[1]-a[1]); const top10 = spec.slice(0,10), rest = spec.slice(10).reduce((a,[,n])=>a+n,0);
   if (rest) top10.push(["All others ("+(spec.length-10)+")", rest]);
-  $("specBox").style.height = Math.max(200, top10.length * 28 + 30) + "px";
-  bar("specChart", top10.map(x=>x[0].replace("Public Health Medicine – ","PHM – ")), top10.map(x=>x[1]), css("--s1"), true, (i)=>pct(top10[i][1], s.totalVoters) + " of voters");
+  $("specBox").style.height = Math.max(180, top10.length*28+30) + "px";
+  bar("specChart", top10.map(x=>x[0].replace("Public Health Medicine – ","PHM – ")), top10.map(x=>x[1]), SERIES[0], true, i=>pct(top10[i][1], s.totalVoters)+" of respondents");
+  const yv = CONFIG.years.map(y=>s.years[y]||0), yt = yv.reduce((a,b)=>a+b,0);
+  bar("yearsChart", CONFIG.years, yv, SERIES[0], false, i=>pct(yv[i],yt)+" of those who answered");
+  const days=[]; for (let i=29;i>=0;i--) days.push(new Date(Date.now()-i*864e5).toISOString().slice(0,10));
+  const first = days.findIndex(d=>s.daily[d]); const shown = days.slice(Math.max(0, Math.min(first<0?16:first, 16)));
+  bar("dayChart", shown.map(d=>new Date(d+"T00:00").toLocaleDateString([], {day:"numeric",month:"short"})), shown.map(d=>s.daily[d]||0), SERIES[0], false, ()=>"new respondents");
 
-  // Years in practice — ordered buckets
-  const yl = CONFIG.years, yv = yl.map(y => s.years[y]||0), ytot = yv.reduce((a,b)=>a+b,0);
-  bar("yearsChart", yl, yv, css("--s1"), false, (i)=>pct(yv[i], ytot) + " of those who answered");
-
-  // Daily activity — last 30 days
-  const days = []; for (let i=29;i>=0;i--) days.push(new Date(Date.now()-i*864e5).toISOString().slice(0,10));
-  const firstIdx = days.findIndex(d => s.daily[d]); const shown = days.slice(Math.max(0, Math.min(firstIdx<0?16:firstIdx, 16)));
-  bar("dayChart", shown.map(d => new Date(d+"T00:00").toLocaleDateString([], {day:"numeric", month:"short"})), shown.map(d=>s.daily[d]||0), css("--s1"), false, ()=> "new voters");
-
-  // Suggestions
   renderSuggestions();
 }
 
-const state = { showAll:false };
-$("topicFilter").innerHTML = `<option value="">All 16 topics</option>` + CONFIG.categories.map(c=>`<option>${esc(c.name)}</option>`).join("");
-["topicFilter","statusFilter"].forEach(id => $(id).addEventListener("change", () => { state.showAll=false; renderSubjects(); }));
-$("showAll").addEventListener("click", () => { state.showAll = !state.showAll; renderSubjects(); });
-function renderSubjects(){
-  const s = state.s; if (!s) return;
-  const tf = $("topicFilter").value, sf = $("statusFilter").value;
-  const list = state.ranked.filter(t => (!tf || t.cat===tf) && (!sf || t.status===sf));
-  const shown = state.showAll ? list : list.slice(0,20);
-  const maxN = Math.max(1, ...list.map(t=>t.n));
-  $("subjCount").textContent = state.showAll || list.length<=20 ? `${list.length} subjects` : `top 20 of ${list.length}`;
-  $("rankList").innerHTML = shown.map((t,i)=>`<li title="${t.n} voters">
-      <div class="top"><span class="ti">${i+1}. ${esc(t.title)}</span><span class="v">${fmt(t.n)}</span><span class="pc">${pct(t.n,s.totalVoters)}</span></div>
-      <div class="meta">${esc(t.cat)}<span class="tag">${t.status==="New"?"New":"Returning"}</span></div>
-      <div class="track"><div class="fill" style="width:${t.n/maxN*100}%;background:${SERIES[0]}"></div></div></li>`).join("") || `<li class="cat">No subjects.</li>`;
-  $("showAll").classList.toggle("hidden", list.length<=20);
-  $("showAll").textContent = state.showAll ? "Show top 20" : `Show all ${list.length}`;
-  $("rankTable").innerHTML = "<tr><th>#</th><th>Subject</th><th>Topic</th><th>Status</th><th>Voters</th><th>% voters</th></tr>" +
-    list.map((t,i)=>`<tr><td>${i+1}</td><td>${esc(t.title)}</td><td>${esc(t.cat)}</td><td>${t.status}</td><td class="n">${t.n}</td><td class="n">${pct(t.n,s.totalVoters)}</td></tr>`).join("");
+function renderTabs(){
+  $("tabs").innerHTML = SESSIONS.map(se => `<button type="button" class="${se.type===state.tab?"on":""}" data-t="${esc(se.type)}">${esc(se.type)} <span style="opacity:.6;font-weight:500">${se.topics.length}</span></button>`).join("");
+  $("tabs").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { state.tab = b.dataset.t; renderTabs(); renderRanking(); }));
+  $("lkey").innerHTML = [1,2,3,4,5].map(v=>`<span><i class="sw" style="background:${LIK[v-1]}"></i>${v}${v===1?" least":v===5?" most":""}</span>`).join("");
+}
+$("sortBy").addEventListener("change", () => renderRanking());
+function renderRanking(){
+  const s = state.s, se = SESSIONS.find(x=>x.type===state.tab), sort = $("sortBy").value;
+  const rows = se.topics.map(t => ({...t, x: s.topics[t.id] || {n:0,mean:0,top2:0,dist:[0,0,0,0,0]}}));
+  const num = id => Number(id.replace(/\D/g,""));
+  rows.sort(sort==="code" ? (a,b)=>num(a.id)-num(b.id) : sort==="top2" ? (a,b)=>b.x.top2-a.x.top2 : (a,b)=>b.x.mean-a.x.mean);
+  $("rankList").innerHTML = rows.map(t => `<li>
+    <div class="top"><span class="code">${esc(t.id)}</span><span class="ti">${esc(t.title)}</span>
+      <span class="sc"><b>${t.x.n ? t.x.mean.toFixed(2) : "–"}</b><div>${t.x.n ? Math.round(t.x.top2*100)+"% rated 4–5" : "no ratings"}</div></span></div>
+    <div class="scope">${esc(t.scope)} · <i>${esc(t.track)}</i></div>
+    <div class="stack" title="${t.x.dist.map((c,i)=>`${i+1}: ${c}`).join(" · ")} (n=${t.x.n})">
+      ${t.x.n ? t.x.dist.map((c,i)=> c ? `<div style="flex:${c};background:${LIK[i]}" title="${i+1} – ${esc(CONFIG.likert[i])}: ${c} (${pct(c,t.x.n)})"></div>` : "").join("") : `<div class="empty"></div>`}
+    </div></li>`).join("");
+  $("rankTable").innerHTML = "<tr><th>Code</th><th>Topic</th><th>Scope</th><th>Avg</th><th>4–5</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>n</th></tr>" +
+    rows.map(t=>`<tr><td>${t.id}</td><td>${esc(t.title)}</td><td>${esc(t.scope)}</td><td class="n">${t.x.mean.toFixed(2)}</td><td class="n">${Math.round(t.x.top2*100)}%</td>${t.x.dist.map(c=>`<td class="n">${c}</td>`).join("")}<td class="n">${t.x.n}</td></tr>`).join("");
 }
 
-// ---------- Voter suggestions ----------
-$("suggTopic").innerHTML = `<option value="">All topics</option>` + [...CONFIG.categories.map(c=>c.name), "Other"].map(n=>`<option>${esc(n)}</option>`).join("");
-$("suggTopic").addEventListener("change", renderSuggestions);
+/* ---------- Suggestions ---------- */
 $("suggSearch").addEventListener("input", renderSuggestions);
 function suggFiltered(){
-  const p = (state.s?.proposals || []).slice().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
-  const tf = $("suggTopic").value, q = $("suggSearch").value.trim().toLowerCase();
-  return p.filter(x => (!tf || x.category===tf) && (!q || (x.title+" "+(x.note||"")).toLowerCase().includes(q)));
+  const q = $("suggSearch").value.trim().toLowerCase();
+  return (state.s?.proposals||[]).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)))
+    .filter(p => (!state.suggSession || p.session===state.suggSession) && (!q || (p.title+" "+p.note).toLowerCase().includes(q)));
 }
 function renderSuggestions(){
   const all = state.s?.proposals || [];
-  // counts per topic (chips double as quick filters)
-  const counts = {}; all.forEach(p => counts[p.category] = (counts[p.category]||0)+1);
-  const tf = $("suggTopic").value;
-  $("suggCounts").innerHTML = Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([c,n]) =>
-    `<button type="button" data-c="${esc(c)}" class="${tf===c?"on":""}">${esc(c)}<b>${n}</b></button>`).join("");
-  $("suggCounts").querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
-    $("suggTopic").value = ($("suggTopic").value === b.dataset.c) ? "" : b.dataset.c; renderSuggestions();
-  }));
+  const cnt = t => all.filter(p=>p.session===t).length;
+  $("suggChips").innerHTML = `<button type="button" data-s="" class="${!state.suggSession?"on":""}">All<b>${all.length}</b></button>` +
+    SESSIONS.map(se=>`<button type="button" data-s="${esc(se.type)}" class="${state.suggSession===se.type?"on":""}">${esc(se.type)}<b>${cnt(se.type)}</b></button>`).join("");
+  $("suggChips").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { state.suggSession = b.dataset.s; renderSuggestions(); }));
   const list = suggFiltered();
   $("suggInfo").textContent = all.length ? `Showing ${list.length} of ${all.length} suggestions, newest first` : "";
-  $("sugg").innerHTML = list.length ? list.map(p => `<li>
-      <div class="st">${esc(p.title)}</div>
-      ${p.note ? `<div class="nt">${esc(p.note)}</div>` : ""}
-      <div class="cat">${esc(p.category)}${p.date ? " · " + new Date(p.date+"T00:00").toLocaleDateString([], {day:"numeric", month:"short", year:"numeric"}) : ""}</div>
-    </li>`).join("") : `<li class="cat">${all.length ? "No suggestions match." : "No suggestions yet."}</li>`;
+  $("sugg").innerHTML = list.length ? list.map(p => `<li><div class="st">${esc(p.title)}</div>${p.note?`<div class="nt">${esc(p.note)}</div>`:""}
+    <div class="cat">${esc(p.session)}${p.date ? " · " + new Date(p.date+"T00:00").toLocaleDateString([], {day:"numeric",month:"short",year:"numeric"}) : ""}</div></li>`).join("")
+    : `<li class="cat">${all.length ? "No suggestions match." : "No suggestions yet."}</li>`;
 }
 $("suggCopy").addEventListener("click", async () => {
-  const text = suggFiltered().map((p,i) => `${i+1}. ${p.title} [${p.category}]${p.note ? " – " + p.note : ""}`).join("\n");
-  try { await navigator.clipboard.writeText(text); $("suggCopy").textContent = "Copied ✓"; }
-  catch(e) { $("suggCopy").textContent = "Copy not available"; }
-  setTimeout(() => $("suggCopy").textContent = "Copy list", 1800);
+  const text = suggFiltered().map((p,i)=>`${i+1}. [${p.session}] ${p.title}${p.note ? " – " + p.note : ""}`).join("\n");
+  try { await navigator.clipboard.writeText(text); $("suggCopy").textContent = "Copied ✓"; } catch(e) { $("suggCopy").textContent = "Copy not available"; }
+  setTimeout(()=>$("suggCopy").textContent = "Copy list", 1800);
 });
 
-function bar(id, labels, data, colors, horizontal, extra){
+/* ---------- Chart helpers ---------- */
+function bar(id, labels, data, color, horizontal, extra, max){
   charts[id]?.destroy();
   charts[id] = new Chart($(id), {
     type:"bar",
-    data:{ labels, datasets:[{ data, backgroundColor:colors, borderRadius:4, borderSkipped:"start",
-      barPercentage:.8, categoryPercentage:.85, maxBarThickness:28 }]},
-    options:{
-      indexAxis: horizontal ? "y" : "x", responsive:true, maintainAspectRatio:false,
-      layout:{ padding:{ right: horizontal ? 30 : 0 } },
+    data:{ labels, datasets:[{ data, backgroundColor:color, borderRadius:4, borderSkipped:"start", barPercentage:.8, categoryPercentage:.85, maxBarThickness:28 }]},
+    options:{ indexAxis: horizontal?"y":"x", responsive:true, maintainAspectRatio:false, layout:{padding:{right:horizontal?34:0}},
       scales:{
-        x:{ grid:{ color: horizontal ? GRID : "transparent" }, border:{display:false}, ticks:{ precision:0, autoSkip:!horizontal, maxRotation:0 }, beginAtZero:true },
-        y:{ grid:{ color: horizontal ? "transparent" : GRID }, border:{display:false}, ticks:{ precision:0, color:"#14263a",
-             callback(v){ const l = this.getLabelForValue(v); const m = this.chart.width < 420 ? 18 : 34; return horizontal && l.length > m ? l.slice(0,m-1)+"…" : l; } }, beginAtZero:true }
-      },
-      plugins:{ tooltip:{ callbacks:{ label:c => " " + fmt(c.parsed[horizontal?"x":"y"]) + (extra ? " · " + extra(c.dataIndex) : "") } } }
-    },
-    plugins:[ horizontal ? valueLabels : {} ]
+        x:{ grid:{color:horizontal?GRID:"transparent"}, border:{display:false}, beginAtZero:true, max: horizontal ? max : undefined, ticks:{precision: max ? 1 : 0, autoSkip:!horizontal, maxRotation:0} },
+        y:{ grid:{color:horizontal?"transparent":GRID}, border:{display:false}, beginAtZero:true, ticks:{precision:0, color:"#14263a",
+            callback(v){ const l=this.getLabelForValue(v); const m=this.chart.width<420?18:34; return horizontal && l.length>m ? l.slice(0,m-1)+"…" : l; } } } },
+      plugins:{ tooltip:{ callbacks:{ label:c=>" "+(max?Number(c.parsed[horizontal?"x":"y"]).toFixed(2):fmt(c.parsed[horizontal?"x":"y"]))+(extra?" · "+extra(c.dataIndex):"") } } } },
+    plugins:[horizontal ? { id:"vl", afterDatasetsDraw(ch){ const {ctx}=ch; ctx.save(); ctx.font="600 12px Inter, system-ui"; ctx.fillStyle="#14263a"; ctx.textBaseline="middle";
+      ch.getDatasetMeta(0).data.forEach((el,i)=>{ const v=ch.data.datasets[0].data[i]; ctx.fillText(max?Number(v).toFixed(2):fmt(v), el.x+6, el.y); }); ctx.restore(); } } : {}]
   });
 }
-// selective direct labels: value at the end of each horizontal bar
-const valueLabels = { id:"valueLabels", afterDatasetsDraw(chart){
-  const {ctx} = chart; const meta = chart.getDatasetMeta(0);
-  ctx.save(); ctx.font = "600 12px Inter, system-ui"; ctx.fillStyle = "#14263a"; ctx.textBaseline = "middle";
-  meta.data.forEach((el,i) => { const v = chart.data.datasets[0].data[i]; ctx.fillText(fmt(v), el.x + 6, el.y); });
-  ctx.restore();
-}};
-
 function donut(id, legendId, labels, data, colors){
   charts[id]?.destroy();
   const total = data.reduce((a,b)=>a+b,0);
-  charts[id] = new Chart($(id), {
-    type:"doughnut",
+  charts[id] = new Chart($(id), { type:"doughnut",
     data:{ labels, datasets:[{ data, backgroundColor:colors, borderColor:SURFACE, borderWidth:2, hoverOffset:4 }]},
-    options:{ cutout:"58%", responsive:true, maintainAspectRatio:false,
-      plugins:{ tooltip:{ callbacks:{ label:c => " " + c.label + ": " + fmt(c.parsed) + " (" + pct(c.parsed,total) + ")" } } } }
-  });
+    options:{ cutout:"58%", responsive:true, maintainAspectRatio:false, plugins:{ tooltip:{ callbacks:{ label:c=>" "+c.label+": "+fmt(c.parsed)+" ("+pct(c.parsed,total)+")" } } } } });
   $(legendId).innerHTML = labels.map((l,i)=>`<li><span class="sw" style="background:${colors[i]}"></span><span class="nm">${esc(l)}</span><span class="n">${fmt(data[i])}</span><span class="p">${pct(data[i],total)}</span></li>`).join("");
 }
 
-function esc(s){ return String(s??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-
-// auto-refresh every 2 minutes while open
 setInterval(() => { if (token && !$("dash").classList.contains("hidden")) load(); }, 120000);
 if (token) openDash();
 </script>
