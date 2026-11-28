@@ -103,7 +103,7 @@
     <p class="sub">A few details so the committee knows who is responding. Then you'll rate the proposed topics, one session type per page.</p>
     <form id="bioForm" novalidate>
       <label class="anon" id="anonBox"><input type="checkbox" id="anonymous">
-        <span><b>Respond anonymously</b><span class="d">Your name, email and institution won't be asked for or recorded. Only your role, specialty and years in practice are counted, as totals.</span></span></label>
+        <span><b>Respond anonymously</b><span class="d">Your name, email and institution won't be asked for or recorded. Only your age group, role, specialty and years in practice are counted, as totals.</span></span></label>
       <div id="idFields">
         <div class="row">
           <div><label for="title">Title</label>
@@ -115,6 +115,9 @@
         <input type="email" id="email" autocomplete="email" placeholder="name@hospital.org">
         <div class="err" id="e_email"></div>
       </div>
+      <label for="age">Age group</label>
+      <select id="age"></select>
+      <div class="err" id="e_age"></div>
       <label for="role">Professional role</label>
       <select id="role"></select>
       <label for="specialty">Specialty</label>
@@ -186,8 +189,10 @@ if (CONFIG.websiteUrl) document.querySelectorAll(".siteLink").forEach(el => el.i
 if (DEMO) $("demoNote").classList.remove("hidden");
 const fill = (sel, items, ph) => { sel.innerHTML = (ph!==null?`<option value="">${ph}</option>`:"") + items.map(i=>`<option>${esc(i)}</option>`).join(""); };
 fill($("role"), CONFIG.roles, "Select role");
+fill($("age"), CONFIG.ages, "Select age group"); $("age").insertAdjacentHTML("beforeend", `<option>Prefer not to say</option>`);
 fill($("specialty"), CONFIG.specialties, "Select specialty");
 $("years").insertAdjacentHTML("beforeend", CONFIG.years.map(y=>`<option>${esc(y)}</option>`).join(""));
+$("age").addEventListener("change", () => $("e_age").textContent = "");
 $("specialty").addEventListener("change", e => $("specialtyOther").classList.toggle("hidden", e.target.value !== "Other"));
 $("bioNext").textContent = "Next: " + SESSIONS[0].type;
 
@@ -220,19 +225,20 @@ function anonId(){
 }
 $("bioForm").addEventListener("submit", e => {
   e.preventDefault();
-  ["e_name","e_email","e_specialty","e_consent"].forEach(id=>$(id).textContent="");
+  ["e_name","e_email","e_age","e_specialty","e_consent"].forEach(id=>$(id).textContent="");
   const anon = $("anonymous").checked;
   const name = $("name").value.trim(), email = $("email").value.trim().toLowerCase();
   const spec = $("specialty").value === "Other" ? $("specialtyOther").value.trim() : $("specialty").value;
   let ok = true;
   if (!anon && name.length < 3){ $("e_name").textContent="Please enter your full name."; ok=false; }
   if (!anon && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ $("e_email").textContent="Please enter a valid email."; ok=false; }
+  if (!$("age").value){ $("e_age").textContent="Please choose your age group (or 'Prefer not to say')."; ok=false; }
   if (!spec){ $("e_specialty").textContent="Please choose your specialty."; ok=false; }
   if (!$("consent").checked){ $("e_consent").textContent="Please tick the consent box to continue."; ok=false; }
   if (!ok) return;
   state.bio = anon
-    ? { anonymous:true, anonId:anonId(), role:$("role").value, specialty:spec, years:$("years").value }
-    : { title:$("title").value, name, email, role:$("role").value, specialty:spec, institution:$("institution").value.trim(), years:$("years").value };
+    ? { anonymous:true, anonId:anonId(), age:$("age").value, role:$("role").value, specialty:spec, years:$("years").value }
+    : { title:$("title").value, name, email, age:$("age").value, role:$("role").value, specialty:spec, institution:$("institution").value.trim(), years:$("years").value };
   show("s0");
 });
 
@@ -327,7 +333,7 @@ function buildReview(){
   const b = state.bio, sugg = cleanSuggestions();
   $("review").innerHTML = `
     <dl><dt>Respondent</dt><dd>${b.anonymous ? "Anonymous" : esc(b.title+" "+b.name+" · "+b.email)}</dd>
-    <dt>Role · Specialty</dt><dd>${esc([b.role,b.specialty].filter(Boolean).join(" · "))}</dd></dl>` +
+    <dt>Age group · Role · Specialty</dt><dd>${esc([b.age,b.role,b.specialty].filter(Boolean).join(" · "))}</dd></dl>` +
     SESSIONS.map(s => `<h3>${esc(s.type)}</h3>` + s.topics.map(t => `<div class="rr"><span>${esc(t.id)} · ${esc(t.title)}</span><b>${state.ratings[t.id]}/5</b></div>`).join("") +
       (state.suggestions[s.type].some(p=>p.title.trim()) ? `<dt style="font-size:13px;color:var(--muted);margin-top:8px">Your suggestions</dt><ul>${state.suggestions[s.type].filter(p=>p.title.trim()).map(p=>`<li>${esc(p.title)}</li>`).join("")}</ul>` : "")
     ).join("");

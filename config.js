@@ -15,6 +15,7 @@ window.CONFIG = {
   likert: ["Least like","Not keen","Neutral","Like","Most like"],
   roles: ["Public Health Physician / Specialist","Clinical Specialist / Consultant","Medical Officer","Trainee (Master / DrPH / Specialist programme)","Academic / Researcher","Programme Manager / Policy Maker","Other health professional"],
   specialties: ["Public Health Medicine – Epidemiology","Public Health Medicine – Communicable Disease Control","Public Health Medicine – Non-Communicable Disease","Public Health Medicine – Health Services Management","Public Health Medicine – Environmental Health","Public Health Medicine – Occupational Health","Public Health Medicine – Family / Maternal & Child Health","Public Health Medicine – Health Promotion","Public Health Medicine – Nutrition","Family Medicine","Infectious Disease","Internal Medicine","Paediatrics","Obstetrics & Gynaecology","Psychiatry","Emergency Medicine","Geriatrics","Pathology / Microbiology","Health Informatics","Other"],
+  ages: ["Under 30","30–39","40–49","50–59","60 and above"],
   years: ["Less than 5","5–10","11–20","More than 20"],
   // Topics: Scientific Committee proposals (13NPHC 2027 Scientific Programme Update: P1–P11, S1–S18)
   // plus the FIBM review (8 plenaries → P12–P19; 9 symposia → S19–S27; 7 reserve symposia → S28–S34).

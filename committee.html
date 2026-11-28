@@ -173,6 +173,12 @@
       </div>
 
       <div class="card">
+        <h3>Respondents by age group</h3>
+        <p class="sub">All respondents, including anonymous</p>
+        <div class="chartbox" style="height:220px"><canvas id="ageChart"></canvas></div>
+      </div>
+
+      <div class="card">
         <h3>Respondents by specialty</h3>
         <p class="sub">Top 10; the rest grouped · PHM = Public Health Medicine</p>
         <div class="chartbox" id="specBox"><canvas id="specChart"></canvas></div>
@@ -262,7 +268,7 @@ async function load(){
 function sampleStats(){
   let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const pick = (arr,w) => { const t=w.reduce((a,b)=>a+b,0); let r=rnd()*t; for(let i=0;i<arr.length;i++){ if((r-=w[i])<0) return arr[i]; } return arr[0]; };
-  const s = { updatedAt:new Date().toISOString(), totalVoters:97, anonymousVoters:23, limit:CONFIG.maxVoters, topics:{}, specialty:{}, role:{}, years:{}, daily:{}, proposals:[] };
+  const s = { updatedAt:new Date().toISOString(), totalVoters:97, anonymousVoters:23, limit:CONFIG.maxVoters, topics:{}, age:{}, specialty:{}, role:{}, years:{}, daily:{}, proposals:[] };
   allTopics.forEach(t => { const bias = rnd()*2.2 - 0.6; const dist=[0,0,0,0,0];
     for (let i=0;i<s.totalVoters;i++){ const v = Math.max(1, Math.min(5, Math.round(3 + bias + (rnd()+rnd()-1)*2.2))); dist[v-1]++; }
     const n = s.totalVoters, sum = dist.reduce((a,c,i)=>a+c*(i+1),0);
@@ -270,6 +276,7 @@ function sampleStats(){
   const specW = CONFIG.specialties.map((_,i)=>1/(1+i*0.3));
   for (let i=0;i<s.totalVoters;i++){
     const sp = pick(CONFIG.specialties, specW); s.specialty[sp]=(s.specialty[sp]||0)+1;
+    const ag = pick([...CONFIG.ages,"Prefer not to say"],[1.5,4,3.5,2,.6,.4]); s.age[ag]=(s.age[ag]||0)+1;
     const ro = pick(CONFIG.roles,[5,2,3,2,1.2,.8,.4]); s.role[ro]=(s.role[ro]||0)+1;
     if (rnd()>.15){ const y = pick(CONFIG.years,[2,3,3,2]); s.years[y]=(s.years[y]||0)+1; }
     const d = new Date(Date.now() - Math.floor(Math.pow(rnd(),0.7)*12)*864e5).toISOString().slice(0,10); s.daily[d]=(s.daily[d]||0)+1;
@@ -315,6 +322,8 @@ function render(){
   if (rest) top10.push(["All others ("+(spec.length-10)+")", rest]);
   $("specBox").style.height = Math.max(180, top10.length*28+30) + "px";
   bar("specChart", top10.map(x=>x[0].replace("Public Health Medicine – ","PHM – ")), top10.map(x=>x[1]), SERIES[0], true, i=>pct(top10[i][1], s.totalVoters)+" of respondents");
+  const ages = [...CONFIG.ages, "Prefer not to say"], av = ages.map(a => (s.age||{})[a]||0);
+  bar("ageChart", ages, av, SERIES[0], true, i=>pct(av[i], s.totalVoters)+" of respondents");
   const yv = CONFIG.years.map(y=>s.years[y]||0), yt = yv.reduce((a,b)=>a+b,0);
   bar("yearsChart", CONFIG.years, yv, SERIES[0], false, i=>pct(yv[i],yt)+" of those who answered");
   const days=[]; for (let i=29;i>=0;i--) days.push(new Date(Date.now()-i*864e5).toISOString().slice(0,10));
@@ -381,7 +390,7 @@ function bar(id, labels, data, color, horizontal, extra, max){
     data:{ labels, datasets:[{ data, backgroundColor:color, borderRadius:4, borderSkipped:"start", barPercentage:.8, categoryPercentage:.85, maxBarThickness:28 }]},
     options:{ indexAxis: horizontal?"y":"x", responsive:true, maintainAspectRatio:false, layout:{padding:{right:horizontal?34:0}},
       scales:{
-        x:{ grid:{color:horizontal?GRID:"transparent"}, border:{display:false}, beginAtZero:true, max: horizontal ? max : undefined, ticks:{precision: max ? 1 : 0, autoSkip:!horizontal, maxRotation:0} },
+        x:{ grid:{color:horizontal?GRID:"transparent"}, border:{display:false}, beginAtZero:true, max: horizontal ? max : undefined, ticks:{precision: max ? 1 : 0, autoSkip: !horizontal && labels.length > 8, maxRotation:0, font:{size: labels.length > 4 && !horizontal ? 11 : 12}} },
         y:{ grid:{color:horizontal?"transparent":GRID}, border:{display:false}, beginAtZero:true, ticks:{precision:0, color:"#14263a",
             callback(v){ const l=this.getLabelForValue(v); const m=this.chart.width<420?18:34; return horizontal && l.length>m ? l.slice(0,m-1)+"…" : l; } } } },
       plugins:{ tooltip:{ callbacks:{ label:c=>" "+(max?Number(c.parsed[horizontal?"x":"y"]).toFixed(2):fmt(c.parsed[horizontal?"x":"y"]))+(extra?" · "+extra(c.dataIndex):"") } } } },
