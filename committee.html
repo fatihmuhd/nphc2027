@@ -72,6 +72,7 @@
   .rank .sc b{font-size:18px;font-variant-numeric:tabular-nums}
   .rank .sc div{font-size:11.5px;color:var(--muted)}
   .rank .scope{font-size:12.5px;color:var(--muted);margin:2px 0 6px 44px}
+  .rank .src{font-size:11.5px;color:var(--brand);margin-top:2px;font-weight:600}
   .stack{display:flex;height:14px;margin-left:44px;gap:2px}
   .stack div{height:100%;min-width:0}
   .stack div:first-child{border-radius:4px 0 0 4px}
@@ -134,6 +135,7 @@
         <div class="tabs" id="tabs"></div>
         <div class="ctrl">
           <label style="margin:0;font-weight:500">Sort <select id="sortBy"><option value="mean">Highest average</option><option value="top2">Most rated 4–5</option><option value="code">Topic code</option></select></label>
+          <label style="margin:0;font-weight:500">Source <select id="srcFilter"><option value="">All proposals</option><option value="Scientific Committee">Scientific Committee</option><option value="FIBM">FIBM review</option></select></label>
           <span class="lkey" id="lkey"></span>
         </div>
         <ul class="rank" id="rankList"></ul>
@@ -279,8 +281,7 @@ function sampleStats(){
     {session:"Symposium", title:"Tuberculosis screening among migrant workers", note:"High burden in construction and plantation sectors.", date:ago(1)},
     {session:"Symposium", title:"Road traffic injury prevention among motorcyclists", note:"Leading cause of death in young Malaysians.", date:ago(4)},
     {session:"Symposium", title:"Leptospirosis after floods", note:"Suggest speaker from state CDC unit.", date:ago(6)},
-    {session:"Workshop", title:"Writing policy briefs that get read", note:"Practical skill for public health specialists.", date:ago(2)},
-    {session:"Workshop", title:"Hands-on outbreak investigation with R", note:"", date:ago(5)}
+    {session:"Symposium", title:"Writing policy briefs that get read", note:"Practical skill for public health specialists.", date:ago(2)}
   ];
   return s;
 }
@@ -329,20 +330,22 @@ function renderTabs(){
   $("lkey").innerHTML = [1,2,3,4,5].map(v=>`<span><i class="sw" style="background:${LIK[v-1]}"></i>${v}${v===1?" least":v===5?" most":""}</span>`).join("");
 }
 $("sortBy").addEventListener("change", () => renderRanking());
+$("srcFilter").addEventListener("change", () => renderRanking());
 function renderRanking(){
   const s = state.s, se = SESSIONS.find(x=>x.type===state.tab), sort = $("sortBy").value;
-  const rows = se.topics.map(t => ({...t, x: s.topics[t.id] || {n:0,mean:0,top2:0,dist:[0,0,0,0,0]}}));
+  const sf = $("srcFilter").value;
+  const rows = se.topics.filter(t => !sf || (t.src||"").startsWith(sf)).map(t => ({...t, x: s.topics[t.id] || {n:0,mean:0,top2:0,dist:[0,0,0,0,0]}}));
   const num = id => Number(id.replace(/\D/g,""));
   rows.sort(sort==="code" ? (a,b)=>num(a.id)-num(b.id) : sort==="top2" ? (a,b)=>b.x.top2-a.x.top2 : (a,b)=>b.x.mean-a.x.mean);
   $("rankList").innerHTML = rows.map(t => `<li>
     <div class="top"><span class="code">${esc(t.id)}</span><span class="ti">${esc(t.title)}</span>
       <span class="sc"><b>${t.x.n ? t.x.mean.toFixed(2) : "–"}</b><div>${t.x.n ? Math.round(t.x.top2*100)+"% rated 4–5" : "no ratings"}</div></span></div>
-    <div class="scope">${esc(t.scope)} · <i>${esc(t.track)}</i></div>
+    <div class="scope">${[t.scope && esc(t.scope), t.track && `<i>${esc(t.track)}</i>`].filter(Boolean).join(" · ")}<div class="src">${esc(t.src||"")}${t.srcCode && t.srcCode!==t.id ? " · " + esc(t.srcCode) : ""}</div></div>
     <div class="stack" title="${t.x.dist.map((c,i)=>`${i+1}: ${c}`).join(" · ")} (n=${t.x.n})">
       ${t.x.n ? t.x.dist.map((c,i)=> c ? `<div style="flex:${c};background:${LIK[i]}" title="${i+1} – ${esc(CONFIG.likert[i])}: ${c} (${pct(c,t.x.n)})"></div>` : "").join("") : `<div class="empty"></div>`}
     </div></li>`).join("");
-  $("rankTable").innerHTML = "<tr><th>Code</th><th>Topic</th><th>Scope</th><th>Avg</th><th>4–5</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>n</th></tr>" +
-    rows.map(t=>`<tr><td>${t.id}</td><td>${esc(t.title)}</td><td>${esc(t.scope)}</td><td class="n">${t.x.mean.toFixed(2)}</td><td class="n">${Math.round(t.x.top2*100)}%</td>${t.x.dist.map(c=>`<td class="n">${c}</td>`).join("")}<td class="n">${t.x.n}</td></tr>`).join("");
+  $("rankTable").innerHTML = "<tr><th>Code</th><th>Topic</th><th>Scope</th><th>Source</th><th>Avg</th><th>4–5</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>n</th></tr>" +
+    rows.map(t=>`<tr><td>${t.id}</td><td>${esc(t.title)}</td><td>${esc(t.scope)}</td><td>${esc(t.src||"")}${t.srcCode&&t.srcCode!==t.id?" ("+esc(t.srcCode)+")":""}</td><td class="n">${t.x.mean.toFixed(2)}</td><td class="n">${Math.round(t.x.top2*100)}%</td>${t.x.dist.map(c=>`<td class="n">${c}</td>`).join("")}<td class="n">${t.x.n}</td></tr>`).join("");
 }
 
 /* ---------- Suggestions ---------- */
